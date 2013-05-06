@@ -28,7 +28,7 @@ import com.ttProject.nio.channels.IFileReadChannel;
  */
 public class ContentsManager3 implements IAtomAnalyzer, IContentsManager {
 	// 動作対象uri
-	private String uri;
+	private final String uri;
 	// freeに書き換えるべきtrakのタグの位置
 	private List<Integer> skipTagPos = new ArrayList<Integer>();
 	// 現在解析中のtrakデータ保持

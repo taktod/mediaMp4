@@ -20,7 +20,7 @@ import com.ttProject.nio.channels.IFileReadChannel;
  */
 public class ContentsManager2 implements IContentsManager {
 	// 動作対象uri
-	private String uri;
+	private final String uri;
 	private int start, end;
 	/**
 	 * コンストラクタ
