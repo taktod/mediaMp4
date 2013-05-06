@@ -50,7 +50,7 @@ public class ContentsManager3 implements IAtomAnalyzer, IContentsManager {
 	public void analyze() throws Exception {
 		IFileReadChannel channel = FileReadChannel.openFileReadChannel(uri);
 		// データを解析しておきます。
-		while(analize(channel) != null) {
+		while(analyze(channel) != null) {
 			;
 		}
 	}
@@ -84,7 +84,7 @@ public class ContentsManager3 implements IAtomAnalyzer, IContentsManager {
 	/**
 	 * 解析
 	 */
-	public Atom analize(IFileReadChannel ch) throws Exception {
+	public Atom analyze(IFileReadChannel ch) throws Exception {
 		if(ch.size() == ch.position()) {
 			return null;
 		}
