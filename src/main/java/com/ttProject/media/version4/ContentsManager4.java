@@ -69,23 +69,19 @@ public class ContentsManager4 implements IContentsManager {
 		File f = new File(uri);
 		hdrFile = new TmpFile("tmp/" + f.getName() + ".hdr");
 		idxFile = new TmpFile("tmp/" + f.getName() + ".idx");
-//		service.execute(new Runnable() {
-//			public void run() {
-				try {
-					System.out.println("analyze開始");
-					analyze();
-					System.out.println("analyzeおわり");
-				}
-				catch(Exception e) {
-					e.printStackTrace();
-				}
-				finally {
-					stsc = null;
-					stsz = null;
-					stco = null;
-				}
-//			}
-//		});
+		try {
+			System.out.println("analyze開始");
+			analyze();
+			System.out.println("analyzeおわり");
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		finally {
+			stsc = null;
+			stsz = null;
+			stco = null;
+		}
 	}
 	/**
 	 * あらかじめ実行する解析動作
