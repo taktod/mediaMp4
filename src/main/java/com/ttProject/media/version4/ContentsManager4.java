@@ -67,8 +67,8 @@ public class ContentsManager4 implements IContentsManager {
 		this.uri = uri;
 		// hdrとidxを作成する必要があります。
 		File f = new File(uri);
-		hdrFile = new TmpFile("tmp/" + f.getName() + ".hdr");
-		idxFile = new TmpFile("tmp/" + f.getName() + ".idx");
+		hdrFile = new TmpFile("/tmp/" + f.getName() + ".hdr");
+		idxFile = new TmpFile("/tmp/" + f.getName() + ".idx");
 		try {
 			System.out.println("analyze開始");
 			analyze();
