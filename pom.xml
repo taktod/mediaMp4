@@ -9,8 +9,8 @@
   <url>http://maven.apache.org</url>
   <repositories>
     <repository>
-      <id>lampetty-commons-github</id>
-      <url>https://github.com/taktod/mvn-repo/tree/master/</url>
+      <id>taktod-github-mvn-repo</id>
+      <url>http://taktod.github.io/mvn-repo/</url>
       <snapshots>
         <enabled>true</enabled>
         <updatePolicy>always</updatePolicy>
