@@ -29,7 +29,7 @@
         <updatePolicy>daily</updatePolicy>
       </snapshots>
     </repository>
-    </repositories>
+  </repositories>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
