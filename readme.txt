@@ -10,14 +10,13 @@
 
 使い方：
 
-　myLib(http://github.com/taktod/myLib)と同じでmaven2とjava6が必要です。
-　myLibのリポジトリに依存してあるので、myLibもcloneして自分のローカルレポに登録しておいてください。
-　$ mvn installを実行すればOK
-
+　maven3とjava1.6以降のjdkを入手します。
 　pom.xmlのあるディレクトリに移動して、以下のmavenコマンドを実行してもらえれば勝手にjettyが起動します。
 　$ mvn jetty:run
 　これでhttp://localhost:8080/test.mp4でアクセスできます。
 　mp4の再生がhtml5で可能なchromeあたりを使ってもらえると良いかと思います。
+
+　maven2を利用している場合はpom.xmlのgithubのリポジトリ指定を書き換えてください。
 
 　いまのところ実装しているのは以下の３つ
 　単純proxy : http://localhost:8080/test.mp4

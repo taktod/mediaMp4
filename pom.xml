@@ -11,15 +11,25 @@
     <version>0.0.1-SNAPSHOT</version>
   </parent>
   <repositories>
+    <!-- maven2でも動作するであろうリモートリポジトリ -->
     <repository>
-      <id>taktod-github-mvn-repo</id>
+      <id>taktod-github-mvn-repo-pages</id>
       <url>http://taktod.github.io/mvn-repo/</url>
       <snapshots>
         <enabled>false</enabled>
         <updatePolicy>daily</updatePolicy>
       </snapshots>
     </repository>
-  </repositories>
+    <!-- maven3を利用しているなら、githubを直接つかった方が楽 -->
+    <repository>
+      <id>taktod-github-mvn-repo</id>
+      <url>https://github.com/taktod/mvn-repo/</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>daily</updatePolicy>
+      </snapshots>
+    </repository>
+    </repositories>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
