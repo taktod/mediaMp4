@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.ttProject</groupId>
     <artifactId>myLib.m2eHelper</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
   </parent>
   <repositories>
     <!-- maven2でも動作するであろうリモートリポジトリ -->
@@ -45,17 +45,17 @@
     <dependency>
       <groupId>com.ttProject</groupId>
       <artifactId>myLib.channels</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>0.0.2-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.ttProject</groupId>
       <artifactId>myLib.util</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>0.0.2-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.ttProject</groupId>
       <artifactId>myLib.mp4</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>0.0.2-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>ehcache</groupId>
