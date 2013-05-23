@@ -55,7 +55,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 	 * @throws Exception
 	 */
 	public IndexFileCreator(String targetFile) throws Exception {
-		idx = new FileOutputStream(targetFile + ".idx").getChannel();
+		idx = new FileOutputStream(targetFile).getChannel();
 	}
 	@Override
 	public Atom analyze(IFileReadChannel ch) throws Exception {
@@ -93,6 +93,8 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			ch.position(position + size);
 			return udta;*/
 		case Trak:
+			updatePrevTag();
+			this.type = null;
 			// trakの開始位置を調べる。
 			this.trakStartPos = (int)idx.position();
 			Trak trak = new Trak(size, position);
@@ -125,12 +127,14 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			ch.position(position + size);
 			return minf;
 		case Vmhd:
+			this.type = CurrentType.VIDEO;
 			this.vdeo = new Vdeo(0, this.trakStartPos);
 			this.vdeo.makeTag(idx);
 			Vmhd vmhd = new Vmhd(size, position);
 			ch.position(position + size);
 			return vmhd;
 		case Smhd:
+			this.type = CurrentType.AUDIO;
 			this.sond = new Sond(0, this.trakStartPos);
 			this.sond.makeTag(idx);
 			Smhd smhd = new Smhd(size, position);
@@ -178,6 +182,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 				}
 			}
 			catch(Exception e) {
+				this.type = null;
 				System.out.println("flvに適合しないコーデックタグをみつけたっぽい。");
 				e.printStackTrace();
 				// 適合していない場合は開始位置までfileを削っておく
@@ -243,7 +248,25 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			}
 		};
 	}
+	public void updatePrevTag() throws Exception {
+		if(this.type == CurrentType.AUDIO
+		|| this.type == CurrentType.VIDEO) {
+			// いままでよんできたデータが正しいtagだった場合
+			int prevPosition = (int)idx.position();
+			int prevSize = prevPosition - this.trakStartPos;
+			System.out.println("prevSize:" + prevSize);
+			ByteBuffer buf = ByteBuffer.allocate(4);
+			buf.putInt(prevSize);
+			buf.flip();
+			idx.position(trakStartPos);
+			idx.write(buf);
+			idx.position(prevPosition);
+			System.out.println("続きを実行");
+		}
+	}
 	public void close() {
+		System.out.println(vdeo);
+		System.out.println(sond);
 		if(idx != null) {
 			try {
 				idx.close();

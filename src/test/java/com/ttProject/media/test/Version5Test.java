@@ -16,6 +16,7 @@ import com.ttProject.media.version5.AtomAnalyzer;
 import com.ttProject.media.version5.IndexFileCreator;
 import com.ttProject.nio.channels.FileReadChannel;
 import com.ttProject.nio.channels.IFileReadChannel;
+import com.ttProject.util.BufferUtil;
 
 /**
  * version5 flv変換のテスト
@@ -68,11 +69,10 @@ public class Version5Test {
 	}
 	@Test
 	public void analyzeTest() throws Exception {
-		IFileReadChannel fc = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.mp4");
-/*		IFileReadChannel fc = FileReadChannel.openFileReadChannel(
+//		IFileReadChannel fc = FileReadChannel.openFileReadChannel("http://49.212.39.17/test.mp4");
+		IFileReadChannel fc = FileReadChannel.openFileReadChannel(
 				Thread.currentThread().getContextClassLoader().getResource("mario2.mp4")
-		);// */
-//		IAtomAnalyzer analyzer = new AtomAnalyzer("tmp.inin");
+		);
 		IndexFileCreator analyzer = new IndexFileCreator("output.tmp");
 		Atom atom = null;
 		while((atom = analyzer.analyze(fc)) != null) {
@@ -80,10 +80,43 @@ public class Version5Test {
 				break;
 			}
 		}
+		analyzer.updatePrevTag();
 		analyzer.close();
+		IFileReadChannel tmp = FileReadChannel.openFileReadChannel("output.tmp");
+		makeupFlv(fc, tmp);
 		// ここまでで一時ファイルの作成(サイズの設定等はまだ)がおわっています。
 		// このタイミングでデータを読み込み直して必要な情報を調べます。
-		
+		// 一時ファイルをみて、データを取り出しつつ処理をすすめていく。
+		tmp.close();
 		fc.close();
+	}
+	private Vdeo vdeo;
+	private Sond sond;
+	private void makeupFlv(IFileReadChannel source, IFileReadChannel tmp) throws Exception {
+		// tmpファイルからVdeoとSondを取り出す。
+		while(tmp.position() < tmp.size()) {
+			System.out.println("pos:" +tmp.position());
+			System.out.println("size:" + tmp.size());
+			int position = tmp.position();
+			ByteBuffer buffer = BufferUtil.safeRead(tmp, 8);
+			int size = buffer.getInt();
+			System.out.println(size);
+			String tag = BufferUtil.getDwordText(buffer);
+			if("vdeo".equals(tag)) {
+				System.out.println("vdeo");
+				vdeo = new Vdeo(size, position);
+				vdeo.analyze(tmp);
+				tmp.position(position + size);
+			}
+			else if("sond".equals(tag)) {
+				System.out.println("sond");
+				sond = new Sond(size, position);
+				sond.analyze(tmp);
+				tmp.position(position + size);
+			}
+			System.out.println("nextPos:" + position + size);
+		}
+		System.out.println(vdeo);
+		System.out.println(sond);
 	}
 }
