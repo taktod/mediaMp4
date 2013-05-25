@@ -2,6 +2,7 @@ package com.ttProject.media.version4;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -36,7 +37,7 @@ import com.ttProject.util.TmpFile;
  * mp4のデータから映像の部分を撤去して応答するプログラム
  * @author taktod
  */
-public class ContentsManager4 implements IContentsManager {
+public class ContentsManager4_bku implements IContentsManager {
 	/** 替わりに設定するftyp値 */
 	private static byte[] ftyp = {
 		0x00, 0x00, 0x00, 0x1C,
@@ -63,7 +64,7 @@ public class ContentsManager4 implements IContentsManager {
 	 * @param uri
 	 * @throws Exception
 	 */
-	public ContentsManager4(String uri) throws Exception {
+	public ContentsManager4_bku(String uri) throws Exception {
 		this.uri = uri;
 		// hdrとidxを作成する必要があります。
 		File f = new File(uri);
@@ -117,6 +118,8 @@ public class ContentsManager4 implements IContentsManager {
 	private void makeTmpFile(List<Atom> list, int moovSize) throws Exception {
 		FileChannel idx = null;
 		FileChannel hdr = null;
+		IFileReadChannel stscReader = null;
+		IFileReadChannel stszReader = null;
 		ByteBuffer buffer;
 		int pos;
 		try {
@@ -142,17 +145,9 @@ public class ContentsManager4 implements IContentsManager {
 					hdr.write(buffer);
 				}
 				else {
-					// stscとstszを読み込む必要があるが、すでにatomのコピーがおわっているならそっちから読んだ方がよさそう。
-					if(atom instanceof Stsc) {
-						stsc = new Stsc(atom.getSize(), (int)hdr.position());
-					}
-					else if(atom instanceof Stsz) {
-						stsz = new Stsz(atom.getSize(), (int)hdr.position());
-					}
 					atom.copy(source, hdr);
 				}
 			}
-			// stcoまでおわっているはず。
 			// 残りはstcoの書き込みとidxファイルの作成
 			IFileReadChannel stcoReader = source;
 			stcoReader.position(stco.getPosition());
@@ -165,31 +160,38 @@ public class ContentsManager4 implements IContentsManager {
 			idx.write(buffer);
 
 			// stcoのindex
-			pos = ftyp.length + moovSize + 8; // もともとのデータのある位置(開始位置みたいなもの)
+			pos = ftyp.length + moovSize + 8;
+			stscReader = FileReadChannel.openFileReadChannel(uri, stsc.getPosition() + 12);
+			int stscCount = BufferUtil.safeRead(stscReader, 4).getInt();
+			stszReader = FileReadChannel.openFileReadChannel(uri, stsz.getPosition() + 12);
+			buffer = BufferUtil.safeRead(stszReader, 8);
+			int stszConstant = buffer.getInt();
 			
-			stsc.start(new FileReadChannel(hdrFile), false);
-			stsz.start(new FileReadChannel(hdrFile), false);
-			// chunksizeを計算したい。
 			int mdatSize = 0; // mdatのサイズ計算用
-			// 次のチャンクがあるかぎり読み込みなおす。
-			while(stsc.nextChunk() != -1) {
-				// このチャンクに対応したsample数を取り出す。
-				stsc.getSampleCount(); // この数分sampleサイズをしる必要がある。
-				int chunkSize = 0;
-				for(int i = 0;i < stsc.getSampleCount();i ++) {
-					if(stsz.nextSampleSize() == -1) {
-						throw new RuntimeException("stszが尽きました.");
-					}
-					chunkSize += stsz.getSampleSize();
+			int currentChunk = 1; // 現在処理中のchunk値
+			int currentSampleCount = 0; // 現在のサンプル値
+			// stscの数繰り返す
+			for(int i = 0;i < stscCount;i ++) {
+				buffer = BufferUtil.safeRead(stscReader, 12);
+				int chunk = buffer.getInt();
+				for(;currentChunk < chunk;currentChunk ++) {
+					int chunkSize = calcurateChunkSize(
+							idx, hdr,
+							stszReader, stcoReader,
+							stszConstant, currentSampleCount, pos);
+					pos += chunkSize;
+					mdatSize += chunkSize;
 				}
-				BufferUtil.writeInt(hdr, pos);
-				// idx 新しい位置 元の位置 サイズ
-				BufferUtil.writeInt(idx, pos);
-				idx.write(BufferUtil.safeRead(stcoReader, 4));
-				BufferUtil.writeInt(idx, chunkSize);
-				pos += chunkSize;
-				mdatSize += chunkSize;
+				currentSampleCount = buffer.getInt();
+//				buffer.getInt(); // ref番号
 			}
+			int chunkSize = calcurateChunkSize(
+					idx, hdr,
+					stszReader, stcoReader,
+					stszConstant, currentSampleCount, pos);
+			pos += chunkSize;
+			mdatSize += chunkSize;
+
 			// mdatの先頭の部分を書き込んでおく。
 			buffer = ByteBuffer.allocate(8);
 			buffer.putInt(mdatSize + 8);
@@ -203,9 +205,30 @@ public class ContentsManager4 implements IContentsManager {
 			e.printStackTrace();
 		}
 		finally {
+			stscReader = ChannelUtil.safeClose(stscReader);
+			stszReader = ChannelUtil.safeClose(stszReader);
 			idx = ChannelUtil.safeClose(idx);
 			hdr = ChannelUtil.safeClose(hdr);
 		}
+	}
+	private int calcurateChunkSize(FileChannel idx, FileChannel hdr,
+			IFileReadChannel stszReader, IFileReadChannel stcoReader,
+			int stszConstant, int currentSampleCount, int pos) throws Exception,
+			IOException {
+		int chunkSize = 0;
+		for(int i = 0;i < currentSampleCount;i ++) {
+			if(stszConstant == 0) {
+				chunkSize += BufferUtil.safeRead(stszReader, 4).getInt();
+			}
+			else {
+				chunkSize += stszConstant;
+			}
+		}
+		BufferUtil.writeInt(hdr, pos);
+		BufferUtil.writeInt(idx, pos);
+		idx.write(BufferUtil.safeRead(stcoReader, 4));
+		BufferUtil.writeInt(idx, chunkSize);
+		return chunkSize;
 	}
 	/**
 	 * moovをみつける。
