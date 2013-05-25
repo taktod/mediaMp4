@@ -31,6 +31,7 @@ import com.ttProject.nio.channels.FileReadChannel;
 import com.ttProject.nio.channels.IFileReadChannel;
 import com.ttProject.util.BufferUtil;
 import com.ttProject.util.ChannelUtil;
+import com.ttProject.util.TmpFile;
 
 /**
  * mp4のデータから映像の部分を撤去して応答するプログラム
