@@ -1,9 +1,7 @@
-package com.ttProject.media.test;
+package com.ttProject.media.version5;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.IAtomAnalyzer;
@@ -15,17 +13,20 @@ import com.ttProject.media.mp4.atom.Stts;
 import com.ttProject.nio.channels.IFileReadChannel;
 import com.ttProject.util.BufferUtil;
 
-public class Sond extends Atom {
+/**
+ * video要素for indexFile
+ * @author taktod
+ */
+public class Vdeo extends Atom {
 	private int size;
 	private Msh msh;
 	private Stco stco;
 	private Stsc stsc;
 	private Stsz stsz;
 	private Stts stts;
-	private int responseSize;
-	private final List<Atom> atoms = new ArrayList<Atom>();
-	public Sond(int size, int position) {
-		super(Sond.class.getSimpleName().toLowerCase(), size, position);
+	private Stss stss;
+	public Vdeo(int size, int position) {
+		super(Vdeo.class.getSimpleName().toLowerCase(), size, position);
 		this.size = size;
 	}
 	public void setSize(int size) {
@@ -33,12 +34,6 @@ public class Sond extends Atom {
 	}
 	public int getSize() {
 		return size;
-	}
-	public void addAtom(Atom atom) {
-		atoms.add(atom);
-	}
-	public List<Atom> getAtoms() {
-		return atoms;
 	}
 	@Override
 	public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
@@ -66,16 +61,37 @@ public class Sond extends Atom {
 			else if("stts".equals(tag)) {
 				stts = new Stts(size, position);
 			}
+			else if("stss".equals(tag)) {
+				stss = new Stss(size, position);
+			}
 			else {
 				throw new Exception("解析不能なタグを発見:" + tag);
 			}
 			ch.position(position + size);
 		}
 	}
+	public Msh getMsh() {
+		return msh;
+	}
+	public Stco getStco() {
+		return stco;
+	}
+	public Stsc getStsc() {
+		return stsc;
+	}
+	public Stsz getStsz() {
+		return stsz;
+	}
+	public Stts getStts() {
+		return stts;
+	}
+	public Stss getStss() {
+		return stss;
+	}
 	public void makeTag(FileChannel idx) throws Exception {
 		ByteBuffer buffer = ByteBuffer.allocate(16);
 		buffer.putInt(size); // サイズ
-		buffer.put("sond".getBytes()); // タグ
+		buffer.put("vdeo".getBytes()); // タグ
 		buffer.putInt(0); // version + flags
 		buffer.putInt(0); // resSize
 		buffer.flip();
