@@ -28,8 +28,6 @@ import com.ttProject.media.mp4.atom.stsd.RecordAnalyzer;
 import com.ttProject.media.mp4.atom.stsd.data.Avcc;
 import com.ttProject.media.mp4.atom.stsd.record.Aac;
 import com.ttProject.media.mp4.atom.stsd.record.H264;
-import com.ttProject.media.test.Sond;
-import com.ttProject.media.test.Vdeo;
 import com.ttProject.nio.channels.IFileReadChannel;
 import com.ttProject.util.BufferUtil;
 
@@ -113,7 +111,6 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			return mdia;
 		case Mdhd:
 			Mdhd mdhd = new Mdhd(size, position);
-			System.out.println("mdhd");
 			mdhd.analyze(ch, null);
 			ch.position(position + size);
 			return mdhd;
@@ -151,7 +148,6 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			return stbl;
 		case Stsd:
 			Stsd stsd = new Stsd(size, position);
-			System.out.println("解析開始:" + Integer.toHexString(position));
 			try {
 				stsd.analyze(ch, new RecordAnalyzer());
 				// 適合している場合はmshを取り出す。
@@ -183,15 +179,12 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			}
 			catch(Exception e) {
 				this.type = null;
-				System.out.println("flvに適合しないコーデックタグをみつけたっぽい。");
 				e.printStackTrace();
 				// 適合していない場合は開始位置までfileを削っておく
-				System.out.println("trakStartPos:" + trakStartPos);
 				idx.truncate(trakStartPos);
 				idx.position(trakStartPos);
 				return null;
 			}
-			System.out.println("解析おわり");
 			ch.position(position + size);
 			return stsd;
 		case Stts:
@@ -254,19 +247,15 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			// いままでよんできたデータが正しいtagだった場合
 			int prevPosition = (int)idx.position();
 			int prevSize = prevPosition - this.trakStartPos;
-			System.out.println("prevSize:" + prevSize);
 			ByteBuffer buf = ByteBuffer.allocate(4);
 			buf.putInt(prevSize);
 			buf.flip();
 			idx.position(trakStartPos);
 			idx.write(buf);
 			idx.position(prevPosition);
-			System.out.println("続きを実行");
 		}
 	}
 	public void close() {
-		System.out.println(vdeo);
-		System.out.println(sond);
 		if(idx != null) {
 			try {
 				idx.close();
