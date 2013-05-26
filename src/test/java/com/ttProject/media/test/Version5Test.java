@@ -4,22 +4,12 @@ import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.junit.Test;
 
 import com.ttProject.media.flv.FlvHeader;
 import com.ttProject.media.mp4.Atom;
-import com.ttProject.media.mp4.IAtomAnalyzer;
 import com.ttProject.media.mp4.atom.Moov;
-import com.ttProject.media.mp4.atom.Stco;
-import com.ttProject.media.mp4.atom.Stsc;
-import com.ttProject.media.mp4.atom.Stss;
-import com.ttProject.media.mp4.atom.Stsz;
-import com.ttProject.media.mp4.atom.Stts;
-import com.ttProject.media.mp4.atom.Trak;
-import com.ttProject.media.version5.AtomAnalyzer;
 import com.ttProject.media.version5.IndexFileCreator;
 import com.ttProject.media.version5.Msh;
 import com.ttProject.media.version5.Sond;
