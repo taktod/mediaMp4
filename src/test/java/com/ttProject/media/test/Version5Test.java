@@ -161,11 +161,11 @@ public class Version5Test {
 				System.out.println("sampleCount:" + sampleCount);
 				// ここでデータがわかるので、追記しておく
 				if(vdeo.getStss().getKeyFrame() == sampleCount) {
-					writeVideoTag(output, timePos, 1, source, sampleSize);
+					writeVideoTag(output, timePos * 1000 / vdeo.getTimescale(), 1, source, sampleSize);
 					vdeo.getStss().nextKeyFrame();
 				}
 				else {
-					writeVideoTag(output, timePos, 2, source, sampleSize);
+					writeVideoTag(output, timePos * 1000 / vdeo.getTimescale(), 2, source, sampleSize);
 				}
 				int delta = vdeo.getStts().nextDuration();
 				System.out.println("delta:" + delta);
