@@ -69,10 +69,10 @@ public class Version5Test {
 	}
 	@Test
 	public void analyzeTest() throws Exception {
-//		IFileReadChannel fc = FileReadChannel.openFileReadChannel("http://49.212.39.17/test.mp4");
-		IFileReadChannel fc = FileReadChannel.openFileReadChannel(
+		IFileReadChannel fc = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.mp4");
+/*		IFileReadChannel fc = FileReadChannel.openFileReadChannel(
 			Thread.currentThread().getContextClassLoader().getResource("mario2.mp4")
-		);
+		);*/
 		IndexFileCreator analyzer = new IndexFileCreator("output.tmp");
 		Atom atom = null;
 		while((atom = analyzer.analyze(fc)) != null) {
