@@ -169,14 +169,18 @@ public class IndexFileCreator implements IAtomAnalyzer {
 						BufferUtil.quickCopy(ch, idx, avcc.getSize() - 8);
 					}
 					else if(record instanceof Aac) {
+						// どうやらavconvでmp3に変換したらrecordタグはmp4aになるみたい。
+						// その場合mshはnullになってしまう。
 						Aac aac = (Aac)record;
 						byte[] data = aac.getEsds().getSequenceHeader();
-						buffer = ByteBuffer.allocate(8 + data.length);
-						buffer.putInt(8 + data.length);
-						buffer.put("msh ".getBytes());
-						buffer.put(data);
-						buffer.flip();
-						idx.write(buffer);
+						if(data != null) {
+							buffer = ByteBuffer.allocate(8 + data.length);
+							buffer.putInt(8 + data.length);
+							buffer.put("msh ".getBytes());
+							buffer.put(data);
+							buffer.flip();
+							idx.write(buffer);
+						}
 					}
 				}
 			}

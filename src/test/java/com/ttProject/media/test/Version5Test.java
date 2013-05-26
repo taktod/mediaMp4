@@ -69,10 +69,10 @@ public class Version5Test {
 	}
 	@Test
 	public void analyzeTest() throws Exception {
-//		IFileReadChannel fc = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.mp4");
-		IFileReadChannel fc = FileReadChannel.openFileReadChannel(
-			Thread.currentThread().getContextClassLoader().getResource("mario2.mp4")
-		);
+		IFileReadChannel fc = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.mp4");
+//		IFileReadChannel fc = FileReadChannel.openFileReadChannel(
+//			Thread.currentThread().getContextClassLoader().getResource("mario2.mp4")
+//		);
 		IndexFileCreator analyzer = new IndexFileCreator("output.tmp");
 		Atom atom = null;
 		while((atom = analyzer.analyze(fc)) != null) {
@@ -111,10 +111,140 @@ public class Version5Test {
 			}
 		}
 		// ここから先データを取り出して調整します。
-		System.out.println("videoつくるよ");
-		makeVideo(source, tmp);
+//		System.out.println("videoつくるよ");
+//		makeVideo(source, tmp);
+		System.out.println("audioつくるよ");
+		makeAudio(source, tmp);
 	}
 	private FileChannel output;
+	/**
+	 * 音声データの抜き出しを実行してみる。
+	 * @param source
+	 * @param tmp
+	 * @throws Exception
+	 */
+	private void makeAudio(IFileReadChannel source, IFileReadChannel tmp) throws Exception {
+		output = new FileOutputStream("target.flv").getChannel();
+		// headerを書き込む
+		FlvHeader flvHeader = new FlvHeader();
+		flvHeader.setVideoFlg(false);
+		flvHeader.setAudioFlg(true);
+		flvHeader.write(output);
+		// mediaSequenceHeaderを書き込む
+		// 08 size 00 00 00 00 00 00 00 AF 00 data endsize
+		System.out.println("mshつくる"); // aacの場合のみ
+		Msh msh = sond.getMsh();
+		if(msh != null) {
+			// aacの場合
+			tmp.position(msh.getPosition() + 8);
+			writeAudioTag(output, 0, 0, tmp, msh.getSize() - 8, false);
+			// データを解析していってすべて書き込んでいく。
+		}
+		// データを書き込む
+		sond.getStco().start(tmp, false);
+		sond.getStsc().start(tmp, false);
+		sond.getStsz().start(tmp, false);
+		sond.getStts().start(tmp, false);
+		System.out.println(sond.getTimescale());
+		long timePos = 0;
+		while(sond.getStco().nextChunkPos() != -1) {
+			source.position(sond.getStco().getChunkPos());
+			sond.getStsc().nextChunk();
+			int chunkSampleCount = sond.getStsc().getSampleCount();
+			for(int i = 0;i < chunkSampleCount;i ++) {
+				int sampleSize = sond.getStsz().nextSampleSize();
+				if(sampleSize == -1) {
+					break;
+				}
+				writeAudioTag(output, (int)(timePos * 1000 / sond.getTimescale()), 1, source, sampleSize, sond.getMsh() == null);
+				int delta = sond.getStts().nextDuration();
+				if(delta == -1) {
+					break;
+				}
+				timePos += delta;
+				System.out.println("pos:" + (timePos * 1000 / sond.getTimescale()));
+			}
+		}
+		output.close();
+	}
+	/**
+	 * 
+	 * @param target 書き込み先
+	 * @param timestamp timestamp
+	 * @param type 1:通常パケット 0:msh
+	 * @param source データソース
+	 * @param size 書き込み量
+	 * @param mp3Flg mp3であるかどうか
+	 * @throws Exception
+	 */
+	private void writeAudioTag(WritableByteChannel target, int timestamp, int type, IFileReadChannel source, int size, boolean mp3Flg) throws Exception {
+		// aacの場合 size + 2バイト余計なデータが必要になりそう。
+		// aacの場合
+		// 08 size timestamp 00 00 00 AF 00 データ eof(msh)
+		// 08 size timestamp 00 00 00 AF 01 データ eof(通常データ)
+		// mp3の場合
+		// 08 size timestamp 00 00 00 2F データ eof(通常データ)
+		if(mp3Flg) {
+			ByteBuffer buffer = ByteBuffer.allocate(11 + 1);
+			buffer.putInt((size + 1) | 0x08000000);
+			// timestamp
+			buffer.put((byte)((timestamp >> 16) & 0xFF));
+			buffer.put((byte)((timestamp >> 8) & 0xFF));
+			buffer.put((byte)((timestamp >> 0) & 0xFF));
+			buffer.put((byte)((timestamp >> 24) & 0xFF));
+			buffer.putInt(0x2F);
+			// mp3
+			switch(type) {
+			case 0:
+				throw new Exception("mp3にはmshはありません");
+			case 1:
+			default:
+				break;
+			}
+			buffer.flip();
+			output.write(buffer);
+			buffer = BufferUtil.safeRead(source, size);
+			output.write(buffer);
+			buffer = ByteBuffer.allocate(4);
+			buffer.putInt(size + 1 + 11);
+			buffer.flip();
+			output.write(buffer);
+		}
+		else {
+			ByteBuffer buffer = ByteBuffer.allocate(11 + 2);
+			buffer.putInt((size + 2) | 0x08000000);
+			// timestamp
+			buffer.put((byte)((timestamp >> 16) & 0xFF));
+			buffer.put((byte)((timestamp >> 8) & 0xFF));
+			buffer.put((byte)((timestamp >> 0) & 0xFF));
+			buffer.put((byte)((timestamp >> 24) & 0xFF));
+			buffer.putInt(0xAF);
+			// aac
+			switch(type) {
+			case 0:
+				buffer.put((byte)0);
+				break;
+			case 1:
+				buffer.put((byte)1);
+			default:
+				break;
+			}
+			buffer.flip();
+			output.write(buffer);
+			buffer = BufferUtil.safeRead(source, size);
+			output.write(buffer);
+			buffer = ByteBuffer.allocate(4);
+			buffer.putInt(size + 2 + 11);
+			buffer.flip();
+			output.write(buffer);
+		}
+	}
+	/**
+	 * 映像データの抜き出しを実行してみる。
+	 * @param source
+	 * @param tmp
+	 * @throws Exception
+	 */
 	private void makeVideo(IFileReadChannel source, IFileReadChannel tmp) throws Exception {
 		output = new FileOutputStream("target.flv").getChannel();
 		// headerを書き込む
@@ -123,7 +253,6 @@ public class Version5Test {
 		flvHeader.setAudioFlg(false);
 		flvHeader.write(output);
 		// mediaSequenceHeaderを書き込む
-		// 09 size 00 00 00 00 00 00 00 17 00 00 00 00 data endsize
 		System.out.println("mshつくる");
 		Msh msh = vdeo.getMsh();
 		tmp.position(msh.getPosition() + 8);
