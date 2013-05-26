@@ -62,6 +62,11 @@
       <artifactId>ehcache</artifactId>
       <version>1.2.3</version>
     </dependency>
+    <dependency>
+      <groupId>com.ttProject</groupId>
+      <artifactId>myLib.flv</artifactId>
+      <version>0.0.2-SNAPSHOT</version>
+    </dependency>
   </dependencies>
   <build>
     <finalName>mediaMp4</finalName>
