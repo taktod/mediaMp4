@@ -19,6 +19,7 @@ import com.ttProject.util.BufferUtil;
  */
 public class Vdeo extends Atom {
 	private int size;
+	private int timescale;
 	private Msh msh;
 	private Stco stco;
 	private Stsc stsc;
@@ -35,11 +36,19 @@ public class Vdeo extends Atom {
 	public int getSize() {
 		return size;
 	}
+	public void setTimescale(int timescale) {
+		this.timescale = timescale;
+	}
+	public int getTimescale() {
+		return timescale;
+	}
 	@Override
 	public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
 			throws Exception {
 		ch.position(getPosition() + 8);
-		ByteBuffer buffer = BufferUtil.safeRead(ch, 8);
+		ByteBuffer buffer = BufferUtil.safeRead(ch, 12);
+		buffer.position(8);
+		timescale = buffer.getInt();
 		// ここから先がタグデータ
 		while(ch.position() < getPosition() + getSize()) {
 			int position = ch.position();
@@ -89,11 +98,12 @@ public class Vdeo extends Atom {
 		return stss;
 	}
 	public void makeTag(FileChannel idx) throws Exception {
-		ByteBuffer buffer = ByteBuffer.allocate(16);
+		ByteBuffer buffer = ByteBuffer.allocate(20);
 		buffer.putInt(size); // サイズ
 		buffer.put("vdeo".getBytes()); // タグ
 		buffer.putInt(0); // version + flags
 		buffer.putInt(0); // resSize
+		buffer.putInt(timescale);
 		buffer.flip();
 		idx.write(buffer);
 	}

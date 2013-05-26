@@ -69,10 +69,10 @@ public class Version5Test {
 	}
 	@Test
 	public void analyzeTest() throws Exception {
-		IFileReadChannel fc = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.mp4");
-/*		IFileReadChannel fc = FileReadChannel.openFileReadChannel(
+//		IFileReadChannel fc = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.mp4");
+		IFileReadChannel fc = FileReadChannel.openFileReadChannel(
 			Thread.currentThread().getContextClassLoader().getResource("mario2.mp4")
-		);*/
+		);
 		IndexFileCreator analyzer = new IndexFileCreator("output.tmp");
 		Atom atom = null;
 		while((atom = analyzer.analyze(fc)) != null) {
@@ -137,6 +137,7 @@ public class Version5Test {
 		vdeo.getStsz().start(tmp, false); // sample size
 		vdeo.getStss().start(tmp, false); // keyFrame
 		vdeo.getStts().start(tmp, false); // time
+		System.out.println(vdeo.getTimescale());
 		System.out.println("初期化おわり");
 		int timePos = 0;
 		int sampleCount = 0;

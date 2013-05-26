@@ -41,6 +41,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 	private CurrentType type = null; // 現在の処理trakタイプ
 	private Vdeo vdeo;
 	private Sond sond;
+	private Mdhd mdhd;
 	private enum CurrentType { // タイプリスト
 		AUDIO,
 		VIDEO,
@@ -110,7 +111,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			ch.position(position + size);
 			return mdia;
 		case Mdhd:
-			Mdhd mdhd = new Mdhd(size, position);
+			mdhd = new Mdhd(size, position);
 			mdhd.analyze(ch, null);
 			ch.position(position + size);
 			return mdhd;
@@ -126,6 +127,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 		case Vmhd:
 			this.type = CurrentType.VIDEO;
 			this.vdeo = new Vdeo(0, this.trakStartPos);
+			this.vdeo.setTimescale(mdhd.getTimescale());
 			this.vdeo.makeTag(idx);
 			Vmhd vmhd = new Vmhd(size, position);
 			ch.position(position + size);
@@ -133,6 +135,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 		case Smhd:
 			this.type = CurrentType.AUDIO;
 			this.sond = new Sond(0, this.trakStartPos);
+			this.sond.setTimescale(mdhd.getTimescale());
 			this.sond.makeTag(idx);
 			Smhd smhd = new Smhd(size, position);
 			ch.position(position + size);
