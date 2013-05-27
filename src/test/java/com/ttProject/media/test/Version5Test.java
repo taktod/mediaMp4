@@ -11,6 +11,7 @@ import com.ttProject.media.flv.FlvHeader;
 import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.atom.Moov;
 import com.ttProject.media.version5.IndexFileCreator;
+import com.ttProject.media.version5.Meta;
 import com.ttProject.media.version5.Msh;
 import com.ttProject.media.version5.Sond;
 import com.ttProject.media.version5.Vdeo;
@@ -92,6 +93,7 @@ public class Version5Test {
 	}
 	private Vdeo vdeo;
 	private Sond sond;
+	private Meta meta;
 	private void makeupFlv(IFileReadChannel source, IFileReadChannel tmp) throws Exception {
 		// tmpファイルからVdeoとSondを取り出す。
 		while(tmp.position() < tmp.size()) {
@@ -108,6 +110,14 @@ public class Version5Test {
 				sond = new Sond(size, position);
 				sond.analyze(tmp);
 				tmp.position(position + size);
+			}
+			else if("meta".equals(tag)) {
+				meta = new Meta(size, position);
+				meta.analyze(tmp);
+				tmp.position(position + size);
+				System.out.println(meta.getWidth());
+				System.out.println(meta.getHeight());
+				System.out.println(meta.getDuration());
 			}
 		}
 		// ここから先データを取り出して調整します。
@@ -162,7 +172,7 @@ public class Version5Test {
 					break;
 				}
 				timePos += delta;
-				System.out.println("pos:" + (timePos * 1000 / sond.getTimescale()));
+//				System.out.println("pos:" + (timePos * 1000 / sond.getTimescale()));
 			}
 		}
 		output.close();

@@ -1,7 +1,7 @@
 package com.ttProject.media.version5;
 
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+import java.nio.channels.WritableByteChannel;
 
 import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.IAtomAnalyzer;
@@ -97,7 +97,7 @@ public class Vdeo extends Atom {
 	public Stss getStss() {
 		return stss;
 	}
-	public void makeTag(FileChannel idx) throws Exception {
+	public void makeTag(WritableByteChannel idx) throws Exception {
 		ByteBuffer buffer = ByteBuffer.allocate(20);
 		buffer.putInt(size); // サイズ
 		buffer.put("vdeo".getBytes()); // タグ

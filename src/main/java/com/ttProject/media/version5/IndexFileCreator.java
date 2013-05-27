@@ -41,7 +41,9 @@ public class IndexFileCreator implements IAtomAnalyzer {
 	private CurrentType type = null; // 現在の処理trakタイプ
 	private Vdeo vdeo;
 	private Sond sond;
+	private Meta meta = null;
 	private Mdhd mdhd;
+	private Tkhd tkhd;
 	private enum CurrentType { // タイプリスト
 		AUDIO,
 		VIDEO,
@@ -101,7 +103,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			ch.position(position + size);
 			return trak;
 		case Tkhd: // 今回はこれがいる。
-			Tkhd tkhd = new Tkhd(size, position);
+			tkhd = new Tkhd(size, position);
 			tkhd.analyze(ch);
 			ch.position(position + size);
 			return tkhd;
@@ -114,6 +116,12 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			mdhd = new Mdhd(size, position);
 			mdhd.analyze(ch, null);
 			ch.position(position + size);
+			if(tkhd.getHeight() != 0 && tkhd.getWidth() != 0) {
+				meta = new Meta(28, this.trakStartPos);
+				meta.setHeight(tkhd.getHeight());
+				meta.setWidth(tkhd.getWidth());
+				meta.setDuration(mdhd.getDuration() * 1000 / mdhd.getTimescale());
+			}
 			return mdhd;
 /*		case Hdlr:
 			Hdlr hdlr = new Hdlr(size, position);
@@ -159,7 +167,6 @@ public class IndexFileCreator implements IAtomAnalyzer {
 						H264 h264 = (H264)record;
 						Avcc avcc = h264.getAvcc();
 						// そのままコピーしておく。
-//						avcc.copy(ch, idx);
 						buffer = ByteBuffer.allocate(8);
 						buffer.putInt(avcc.getSize());
 						buffer.put("msh ".getBytes());
@@ -172,6 +179,17 @@ public class IndexFileCreator implements IAtomAnalyzer {
 						// どうやらavconvでmp3に変換したらrecordタグはmp4aになるみたい。
 						// その場合mshはnullになってしまう。
 						Aac aac = (Aac)record;
+						// このタイミングでsondの中にデータをいれておく。
+						System.out.println("sampleRate:" + aac.getSampleRate());
+						System.out.println("channels:" + aac.getChannelCount());
+						long prevPos = idx.position();
+						idx.position(sond.getPosition() + 20);
+						buffer = ByteBuffer.allocate(5);
+						buffer.putInt(aac.getSampleRate());
+						buffer.put((byte)aac.getChannelCount());
+						buffer.flip();
+						idx.write(buffer);
+						idx.position(prevPos);
 						byte[] data = aac.getEsds().getSequenceHeader();
 						if(data != null) {
 							buffer = ByteBuffer.allocate(8 + data.length);
@@ -260,6 +278,11 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			idx.position(trakStartPos);
 			idx.write(buf);
 			idx.position(prevPosition);
+		}
+		if(meta != null) {
+			// metaデータを書き込んでおく。
+			meta.makeTag(idx);
+			meta = null;
 		}
 	}
 	public void close() {

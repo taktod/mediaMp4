@@ -1,7 +1,7 @@
 package com.ttProject.media.version5;
 
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+import java.nio.channels.WritableByteChannel;
 
 import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.IAtomAnalyzer;
@@ -15,6 +15,8 @@ import com.ttProject.util.BufferUtil;
 public class Sond extends Atom {
 	private int size;
 	private int timescale;
+	private int sampleRate;
+	private byte channelCount;
 	private Msh msh;
 	private Stco stco;
 	private Stsc stsc;
@@ -40,7 +42,7 @@ public class Sond extends Atom {
 	public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
 			throws Exception {
 		ch.position(getPosition() + 8);
-		ByteBuffer buffer = BufferUtil.safeRead(ch, 12);
+		ByteBuffer buffer = BufferUtil.safeRead(ch, 17);
 		buffer.position(8);
 		timescale = buffer.getInt();
 		// ここから先がタグデータ
@@ -70,13 +72,15 @@ public class Sond extends Atom {
 			ch.position(position + size);
 		}
 	}
-	public void makeTag(FileChannel idx) throws Exception {
-		ByteBuffer buffer = ByteBuffer.allocate(20);
+	public void makeTag(WritableByteChannel idx) throws Exception {
+		ByteBuffer buffer = ByteBuffer.allocate(25);
 		buffer.putInt(size); // サイズ
 		buffer.put("sond".getBytes()); // タグ
 		buffer.putInt(0); // version + flags
 		buffer.putInt(0); // resSize
-		buffer.putInt(timescale);
+		buffer.putInt(timescale); // timescale
+		buffer.putInt(sampleRate); // sampleRate
+		buffer.put(channelCount);
 		buffer.flip();
 		idx.write(buffer);
 	}
