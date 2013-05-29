@@ -1,17 +1,30 @@
-package com.ttProject.media.version5;
+package com.ttProject.media.version5.mp4;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 
+import com.ttProject.media.flv.tag.MetaTag;
 import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.IAtomAnalyzer;
 import com.ttProject.nio.channels.IFileReadChannel;
 import com.ttProject.util.BufferUtil;
 
-public class Meta extends Atom {
-	public int height;
-	public int width;
-	public long duration;
+/**
+ * metaデータ用のatom
+ * @author taktod
+ */
+public class Meta extends Atom implements IIndexAtom {
+	/** 動画データの高さ */
+	private int height = 0;
+	/** 動画データの幅 */
+	private int width = 0;
+	/** 再生長(ミリ秒単位) */
+	private long duration = 0;
+	/**
+	 * コンストラクタ
+	 * @param size
+	 * @param position
+	 */
 	public Meta(int size, int position) {
 		super(Meta.class.getSimpleName().toLowerCase(), size, position);
 	}
@@ -27,12 +40,23 @@ public class Meta extends Atom {
 	public void setWidth(int width) {
 		this.width = width;
 	}
+	/**
+	 * 動画の長さ参照(ミリ秒)
+	 * @return
+	 */
 	public long getDuration() {
 		return duration;
 	}
+	/**
+	 * 動画の長さ設定(ミリ秒)
+	 * @param duration
+	 */
 	public void setDuration(long duration) {
 		this.duration = duration;
 	}
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
 			throws Exception {
@@ -43,7 +67,11 @@ public class Meta extends Atom {
 		height = buffer.getInt();
 		duration = buffer.getLong();
 	}
-	public void makeTag(WritableByteChannel idx) throws Exception {
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void writeIndex(WritableByteChannel idx) throws Exception {
 		ByteBuffer buffer = ByteBuffer.allocate(28);
 		buffer.putInt(getSize());
 		buffer.put("meta".getBytes());
@@ -53,5 +81,23 @@ public class Meta extends Atom {
 		buffer.putLong(duration);
 		buffer.flip();
 		idx.write(buffer);
+	}
+	/**
+	 * flv用のmetaTagを生成します。
+	 * @return
+	 */
+	public MetaTag createFlvMetaTag() {
+		MetaTag metaTag = new MetaTag();
+		metaTag.setTimestamp(0);
+		if(width != 0) {
+			metaTag.putData("width", getWidth());
+		}
+		if(height != 0) {
+			metaTag.putData("height", getHeight());
+		}
+		if(duration != 0) {
+			metaTag.putData("duration", getDuration() / 1000.0D);
+		}
+		return metaTag;
 	}
 }

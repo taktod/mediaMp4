@@ -1,8 +1,10 @@
-package com.ttProject.media.version5;
+package com.ttProject.media.version5.mp4;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 
+import com.ttProject.media.flv.CodecType;
+import com.ttProject.media.flv.tag.VideoTag;
 import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.IAtomAnalyzer;
 import com.ttProject.media.mp4.atom.Stco;
@@ -14,18 +16,31 @@ import com.ttProject.nio.channels.IFileReadChannel;
 import com.ttProject.util.BufferUtil;
 
 /**
- * video要素for indexFile
+ * 映像データ用Atom
  * @author taktod
  */
-public class Vdeo extends Atom {
+public class Vdeo extends Atom implements IIndexAtom {
+	/** データサイズ */
 	private int size;
+	/** timescale値(1秒あたり何ticあるか) */
 	private int timescale;
+	/** mediaSequenceHeader */
 	private Msh msh;
+	/** stco */
 	private Stco stco;
+	/** stsc */
 	private Stsc stsc;
+	/** stsz */
 	private Stsz stsz;
+	/** stts */
 	private Stts stts;
+	/** stss */
 	private Stss stss;
+	/**
+	 * コンストラクタ
+	 * @param size
+	 * @param position
+	 */
 	public Vdeo(int size, int position) {
 		super(Vdeo.class.getSimpleName().toLowerCase(), size, position);
 		this.size = size;
@@ -37,10 +52,29 @@ public class Vdeo extends Atom {
 		return size;
 	}
 	public void setTimescale(int timescale) {
+		System.out.println("timescale:" + timescale);
 		this.timescale = timescale;
 	}
 	public int getTimescale() {
 		return timescale;
+	}
+	public Msh getMsh() {
+		return msh;
+	}
+	public Stco getStco() {
+		return stco;
+	}
+	public Stsc getStsc() {
+		return stsc;
+	}
+	public Stsz getStsz() {
+		return stsz;
+	}
+	public Stts getStts() {
+		return stts;
+	}
+	public Stss getStss() {
+		return stss;
 	}
 	@Override
 	public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
@@ -79,25 +113,8 @@ public class Vdeo extends Atom {
 			ch.position(position + size);
 		}
 	}
-	public Msh getMsh() {
-		return msh;
-	}
-	public Stco getStco() {
-		return stco;
-	}
-	public Stsc getStsc() {
-		return stsc;
-	}
-	public Stsz getStsz() {
-		return stsz;
-	}
-	public Stts getStts() {
-		return stts;
-	}
-	public Stss getStss() {
-		return stss;
-	}
-	public void makeTag(WritableByteChannel idx) throws Exception {
+	@Override
+	public void writeIndex(WritableByteChannel idx) throws Exception {
 		ByteBuffer buffer = ByteBuffer.allocate(20);
 		buffer.putInt(size); // サイズ
 		buffer.put("vdeo".getBytes()); // タグ
@@ -106,5 +123,23 @@ public class Vdeo extends Atom {
 		buffer.putInt(timescale);
 		buffer.flip();
 		idx.write(buffer);
+	}
+	/**
+	 * flv用のmediaSequenceHeaderを作成します。
+	 * @param tmp
+	 * @return
+	 * @throws Exception
+	 */
+	public VideoTag createFlvMshTag(IFileReadChannel tmp) throws Exception {
+		if(msh == null) {
+			return null;
+		}
+		VideoTag mshTag = new VideoTag();
+		mshTag.setCodec(CodecType.AVC);
+		mshTag.setFrameType(true);
+		mshTag.setMSHFlg(true);
+		tmp.position(msh.getPosition() + 8);
+		mshTag.setData(tmp, msh.getSize() - 8);
+		return mshTag;
 	}
 }

@@ -1,8 +1,10 @@
-package com.ttProject.media.version5;
+package com.ttProject.media.version5.mp4;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 
+import com.ttProject.media.flv.CodecType;
+import com.ttProject.media.flv.tag.AudioTag;
 import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.IAtomAnalyzer;
 import com.ttProject.media.mp4.atom.Stco;
@@ -12,16 +14,35 @@ import com.ttProject.media.mp4.atom.Stts;
 import com.ttProject.nio.channels.IFileReadChannel;
 import com.ttProject.util.BufferUtil;
 
-public class Sond extends Atom {
+/**
+ * 音声データ用のatom
+ * @author taktod
+ *
+ */
+public class Sond extends Atom implements IIndexAtom {
+	/** データサイズ */
 	private int size;
+	/** timescale値(1秒あたり何ticあるか) */
 	private int timescale;
+	/** サンプルレート */
 	private int sampleRate;
+	/** チャンネルカウント 1:モノラル 2:ステレオ */
 	private byte channelCount;
+	/** mediaSequenceHeader */
 	private Msh msh;
+	/** stco */
 	private Stco stco;
+	/** stsc */
 	private Stsc stsc;
+	/** stsz */
 	private Stsz stsz;
+	/** stts */
 	private Stts stts;
+	/**
+	 * コンストラクタ
+	 * @param size
+	 * @param position
+	 */
 	public Sond(int size, int position) {
 		super(Sond.class.getSimpleName().toLowerCase(), size, position);
 		this.size = size;
@@ -38,6 +59,27 @@ public class Sond extends Atom {
 	public int getTimescale() {
 		return timescale;
 	}
+	public int getSampleRate() {
+		return sampleRate;
+	}
+	public byte getChannelCount() {
+		return channelCount;
+	}
+	public Msh getMsh() {
+		return msh;
+	}
+	public Stco getStco() {
+		return stco;
+	}
+	public Stsc getStsc() {
+		return stsc;
+	}
+	public Stsz getStsz() {
+		return stsz;
+	}
+	public Stts getStts() {
+		return stts;
+	}
 	@Override
 	public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
 			throws Exception {
@@ -45,6 +87,8 @@ public class Sond extends Atom {
 		ByteBuffer buffer = BufferUtil.safeRead(ch, 17);
 		buffer.position(8);
 		timescale = buffer.getInt();
+		sampleRate = buffer.getInt();
+		channelCount = buffer.get();
 		// ここから先がタグデータ
 		while(ch.position() < getPosition() + getSize()) {
 			int position = ch.position();
@@ -72,7 +116,8 @@ public class Sond extends Atom {
 			ch.position(position + size);
 		}
 	}
-	public void makeTag(WritableByteChannel idx) throws Exception {
+	@Override
+	public void writeIndex(WritableByteChannel idx) throws Exception {
 		ByteBuffer buffer = ByteBuffer.allocate(25);
 		buffer.putInt(size); // サイズ
 		buffer.put("sond".getBytes()); // タグ
@@ -84,19 +129,24 @@ public class Sond extends Atom {
 		buffer.flip();
 		idx.write(buffer);
 	}
-	public Msh getMsh() {
-		return msh;
-	}
-	public Stco getStco() {
-		return stco;
-	}
-	public Stsc getStsc() {
-		return stsc;
-	}
-	public Stsz getStsz() {
-		return stsz;
-	}
-	public Stts getStts() {
-		return stts;
+	/**
+	 * flv用のmediaSequenceHeaderを作成します。
+	 * @param tmp
+	 * @return
+	 * @throws Exception
+	 */
+	public AudioTag createFlvMshTag(IFileReadChannel tmp) throws Exception {
+		if(msh == null) { // mediaSequenceHeaderが解析されていない場合は応答しない。
+			return null;
+		}
+		AudioTag mshTag = new AudioTag();
+		// とりあえずmshがある場合はaacなので、そのようにしておく
+		mshTag.setCodec(CodecType.AAC);
+		mshTag.setChannels(channelCount);
+		mshTag.setSampleRate(sampleRate);
+		mshTag.setMSHFlg(true);
+		tmp.position(msh.getPosition() + 8);
+		mshTag.setData(tmp, msh.getSize() - 8);
+		return mshTag;
 	}
 }
