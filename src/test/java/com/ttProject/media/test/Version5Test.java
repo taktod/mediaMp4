@@ -8,7 +8,6 @@ import org.junit.Test;
 
 import com.ttProject.media.flv.CodecType;
 import com.ttProject.media.flv.FlvHeader;
-import com.ttProject.media.flv.FlvTagOrderManager;
 import com.ttProject.media.flv.tag.AudioTag;
 import com.ttProject.media.flv.tag.MetaTag;
 import com.ttProject.media.flv.tag.VideoTag;
