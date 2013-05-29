@@ -28,6 +28,9 @@ import com.ttProject.media.mp4.atom.stsd.RecordAnalyzer;
 import com.ttProject.media.mp4.atom.stsd.data.Avcc;
 import com.ttProject.media.mp4.atom.stsd.record.Aac;
 import com.ttProject.media.mp4.atom.stsd.record.H264;
+import com.ttProject.media.version5.mp4.Meta;
+import com.ttProject.media.version5.mp4.Sond;
+import com.ttProject.media.version5.mp4.Vdeo;
 import com.ttProject.nio.channels.IFileReadChannel;
 import com.ttProject.util.BufferUtil;
 
@@ -39,11 +42,11 @@ public class IndexFileCreator implements IAtomAnalyzer {
 	private FileChannel idx; // 書き込み対象ファイル
 	private int trakStartPos; // トラックの開始位置
 	private CurrentType type = null; // 現在の処理trakタイプ
-	private Vdeo vdeo;
-	private Sond sond;
+	private Vdeo vdeo = null;
+	private Sond sond = null;
 	private Meta meta = null;
-	private Mdhd mdhd;
-	private Tkhd tkhd;
+	private Mdhd mdhd = null;
+	private Tkhd tkhd = null;
 	private enum CurrentType { // タイプリスト
 		AUDIO,
 		VIDEO,
@@ -136,7 +139,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			this.type = CurrentType.VIDEO;
 			this.vdeo = new Vdeo(0, this.trakStartPos);
 			this.vdeo.setTimescale(mdhd.getTimescale());
-			this.vdeo.makeTag(idx);
+			this.vdeo.writeIndex(idx);
 			Vmhd vmhd = new Vmhd(size, position);
 			ch.position(position + size);
 			return vmhd;
@@ -144,7 +147,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			this.type = CurrentType.AUDIO;
 			this.sond = new Sond(0, this.trakStartPos);
 			this.sond.setTimescale(mdhd.getTimescale());
-			this.sond.makeTag(idx);
+			this.sond.writeIndex(idx);
 			Smhd smhd = new Smhd(size, position);
 			ch.position(position + size);
 			return smhd;
@@ -179,6 +182,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 						// どうやらavconvでmp3に変換したらrecordタグはmp4aになるみたい。
 						// その場合mshはnullになってしまう。
 						Aac aac = (Aac)record;
+						// TODO この上書きの部分が少々気に入らない
 						// このタイミングでsondの中にデータをいれておく。
 						System.out.println("sampleRate:" + aac.getSampleRate());
 						System.out.println("channels:" + aac.getChannelCount());
@@ -281,7 +285,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 		}
 		if(meta != null) {
 			// metaデータを書き込んでおく。
-			meta.makeTag(idx);
+			meta.writeIndex(idx);
 			meta = null;
 		}
 	}
