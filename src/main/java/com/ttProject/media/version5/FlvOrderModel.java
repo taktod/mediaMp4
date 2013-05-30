@@ -233,7 +233,6 @@ public class FlvOrderModel {
 	}
 	private void analyzeSond(IFileReadChannel source) throws Exception {
 		int sourcePos = sond.getStco().getChunkPos();
-		System.out.println(sourcePos);
 		sond.getStsc().nextChunk();
 		int chunkSampleCount = sond.getStsc().getSampleCount();
 		for(int i = 0;i < chunkSampleCount;i ++) {

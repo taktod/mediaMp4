@@ -63,6 +63,7 @@ public class ContentsManager5 implements IContentsManager {
 			}
 		}
 		catch (Exception e) {
+			e.printStackTrace();
 		}
 		finally {
 			if(source != null) {
