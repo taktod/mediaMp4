@@ -13,7 +13,6 @@ import com.ttProject.media.flv.tag.VideoTag;
 import com.ttProject.media.version5.mp4.Meta;
 import com.ttProject.media.version5.mp4.Sond;
 import com.ttProject.media.version5.mp4.Vdeo;
-import com.ttProject.nio.channels.FileReadChannel;
 import com.ttProject.nio.channels.IFileReadChannel;
 import com.ttProject.util.BufferUtil;
 
@@ -35,7 +34,7 @@ public class FlvOrderModel {
 	/**
 	 * コンストラクタ
 	 */
-	public FlvOrderModel(String idxFile, boolean videoFlg, boolean soundFlg, int startMilliSecond) throws Exception {
+	public FlvOrderModel(IFileReadChannel idxFile, boolean videoFlg, boolean soundFlg, int startMilliSecond) throws Exception {
 		this.startMilliSeconds = startMilliSecond;
 		initialize(idxFile, videoFlg, soundFlg);
 	}
@@ -59,8 +58,7 @@ public class FlvOrderModel {
 	/**
 	 * 開始準備をしておく。
 	 */
-	private void initialize(String idxFile, boolean videoFlg, boolean soundFlg) throws Exception {
-		IFileReadChannel tmp = FileReadChannel.openFileReadChannel(idxFile);
+	private void initialize(IFileReadChannel tmp, boolean videoFlg, boolean soundFlg) throws Exception {
 		while(tmp.position() < tmp.size()) {
 			int position = tmp.position();
 			ByteBuffer buffer = BufferUtil.safeRead(tmp, 8);

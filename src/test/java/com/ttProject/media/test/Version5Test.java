@@ -1,8 +1,11 @@
 package com.ttProject.media.test;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.channels.FileChannel;
 import java.util.List;
+
+import javax.management.openmbean.OpenDataException;
 
 import org.junit.Test;
 
@@ -43,7 +46,7 @@ public class Version5Test {
 	@Test
 	public void analyzeTest() throws Exception {
 		IFileReadChannel fc = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.mp4");
-		IndexFileCreator analyzer = new IndexFileCreator("output.tmp");
+		IndexFileCreator analyzer = new IndexFileCreator(new File("output.tmp"));
 		Atom atom = null;
 		while((atom = analyzer.analyze(fc)) != null) {
 			if(atom instanceof Moov) {
@@ -52,9 +55,9 @@ public class Version5Test {
 		}
 		analyzer.updatePrevTag();
 		analyzer.close();
-		IFileReadChannel tmp = FileReadChannel.openFileReadChannel("output.tmp");
+		IFileReadChannel tmp = FileReadChannel.openFileReadChannel(new File("output.tmp").getAbsolutePath());
 		// ここで開始位置、video要素、audio要素等の指定が可能になります。
-		FlvOrderModel orderModel = new FlvOrderModel("output.tmp", true, true, 30000);
+		FlvOrderModel orderModel = new FlvOrderModel(tmp, true, true, 30000);
 		// 書き込み対象作成
 		FileChannel output = new FileOutputStream("target.flv").getChannel();
 		// header情報

@@ -1,5 +1,6 @@
 package com.ttProject.media.version5;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -58,7 +59,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 	 * @param targetFile
 	 * @throws Exception
 	 */
-	public IndexFileCreator(String targetFile) throws Exception {
+	public IndexFileCreator(File targetFile) throws Exception {
 		idx = new FileOutputStream(targetFile).getChannel();
 	}
 	@Override

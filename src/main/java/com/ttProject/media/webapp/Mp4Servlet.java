@@ -10,9 +10,11 @@ import javax.servlet.http.HttpServletResponse;
 import com.ttProject.media.version2.ContentsManager2;
 import com.ttProject.media.version3.ContentsManager3;
 import com.ttProject.media.version4.ContentsManager4;
+import com.ttProject.media.version5.ContentsManager5;
 
 public class Mp4Servlet extends HttpServlet {
 	private static final long serialVersionUID = -5489579505092778690L;
+	private ContentsManager5 manager5 = null;
 	private ContentsManager4 manager4 = null;
 	private ContentsManager3 manager3 = null;
 	private ContentsManager2 manager2 = null;
@@ -21,6 +23,7 @@ public class Mp4Servlet extends HttpServlet {
 	 */
 	public Mp4Servlet() {
 		try {
+			manager5 = new ContentsManager5("http://49.212.39.17/mario.mp4");
 			manager4 = new ContentsManager4("http://49.212.39.17/mario.mp4");
 			manager3 = new ContentsManager3("http://49.212.39.17/mario.mp4");
 			manager2 = new ContentsManager2("http://49.212.39.17/mario.mp4");
@@ -66,6 +69,7 @@ public class Mp4Servlet extends HttpServlet {
 			}
 			else if(requestURI.endsWith(".flv")) {
 				// flvにコンテナ変換したバージョン
+				manager5.accessMediaData(request, response);
 			}
 			else if(requestURI.endsWith(".ts")) {
 				// mpegtsにコンテナ変換したバージョン
