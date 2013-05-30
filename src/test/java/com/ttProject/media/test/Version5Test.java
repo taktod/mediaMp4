@@ -5,8 +5,6 @@ import java.io.FileOutputStream;
 import java.nio.channels.FileChannel;
 import java.util.List;
 
-import javax.management.openmbean.OpenDataException;
-
 import org.junit.Test;
 
 import com.ttProject.media.flv.Tag;
