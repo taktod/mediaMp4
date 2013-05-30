@@ -164,25 +164,24 @@ public class FlvOrderModel {
 				// keyFrameが来るまでデータを捨てる必要がある。
 				if(!(tag instanceof VideoTag) || !((VideoTag)tag).isKeyFrame()) {
 					result.remove(0); // 先頭のデータは必要ないので、捨てる
+					continue;
 				}
-				else {
-					// 第一キーフレームなので、ここからはじめることにする。
-					if(audioMshTag != null) {
-						audioMshTag.setTimestamp(tag.getTimestamp());
-						result.add(0, audioMshTag);
-					}
-					if(videoMshTag != null) {
-						videoMshTag.setTimestamp(tag.getTimestamp());
-						result.add(0, videoMshTag);
-					}
-					if(meta != null) {
-						MetaTag metaTag = meta.createFlvMetaTag();
-						metaTag.setTimestamp(tag.getTimestamp());
-						result.add(0, metaTag);
-					}
-					startResponse = true;
-					break;
+				// 第一キーフレームなので、ここからはじめることにする。
+				if(audioMshTag != null) {
+					audioMshTag.setTimestamp(tag.getTimestamp());
+					result.add(0, audioMshTag);
 				}
+				if(videoMshTag != null) {
+					videoMshTag.setTimestamp(tag.getTimestamp());
+					result.add(0, videoMshTag);
+				}
+				if(meta != null) {
+					MetaTag metaTag = meta.createFlvMetaTag();
+					metaTag.setTimestamp(tag.getTimestamp());
+					result.add(0, metaTag);
+				}
+				startResponse = true;
+				break;
 			}
 		}
 		// 応答
