@@ -3,16 +3,19 @@ package com.ttProject.media.test;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.List;
 
 import org.junit.Test;
 
 import com.ttProject.media.flv.CodecType;
 import com.ttProject.media.flv.FlvHeader;
+import com.ttProject.media.flv.Tag;
 import com.ttProject.media.flv.tag.AudioTag;
 import com.ttProject.media.flv.tag.MetaTag;
 import com.ttProject.media.flv.tag.VideoTag;
 import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.atom.Moov;
+import com.ttProject.media.version5.FlvOrderModel;
 import com.ttProject.media.version5.IndexFileCreator;
 import com.ttProject.media.version5.mp4.Meta;
 import com.ttProject.media.version5.mp4.Sond;
@@ -71,6 +74,36 @@ public class Version5Test {
 		fc.close();
 	}
 	@Test
+	public void analyzeTest2() throws Exception {
+		IFileReadChannel fc = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.mp4");
+		IndexFileCreator analyzer = new IndexFileCreator("output.tmp");
+		Atom atom = null;
+		while((atom = analyzer.analyze(fc)) != null) {
+			if(atom instanceof Moov) {
+				break;
+			}
+		}
+		analyzer.updatePrevTag();
+		analyzer.close();
+		IFileReadChannel tmp = FileReadChannel.openFileReadChannel("output.tmp");
+		FlvOrderModel orderModel = new FlvOrderModel("output.tmp", true, true, 30000);
+		output = new FileOutputStream("target.flv").getChannel();
+		orderModel.getFlvHeader().writeTag(output);
+		List<Tag> tagList;
+		while((tagList = orderModel.nextTagList(fc)) != null) {
+//			System.out.println(tagList);
+			for(Tag tag : tagList) {
+				tag.writeTag(output);
+			}
+		}
+		output.close();
+		// ここまでで一時ファイルの作成(サイズの設定等はまだ)がおわっています。
+		// このタイミングでデータを読み込み直して必要な情報を調べます。
+		// 一時ファイルをみて、データを取り出しつつ処理をすすめていく。
+		tmp.close();
+		fc.close();
+	}
+//	@Test
 	public void analyzeTest() throws Exception {
 		IFileReadChannel fc = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.mp4");
 /*		IFileReadChannel fc = FileReadChannel.openFileReadChannel(
@@ -122,10 +155,10 @@ public class Version5Test {
 		// ここから先データを取り出して調整します。
 //		System.out.println("videoつくるよ");
 //		makeVideo(source, tmp);
-//		System.out.println("audioつくるよ");
-//		makeAudio(source, tmp);
+		System.out.println("audioつくるよ");
+		makeAudio(source, tmp);
 	}
-	private int startPos = 30000;
+	private int startPos = 3000;
 	private FileChannel output;
 	/**
 	 * 音声データの抜き出しを実行してみる。
@@ -156,6 +189,7 @@ public class Version5Test {
 			for(int i = 0;i < chunkSampleCount;i ++) {
 				int sampleSize = sond.getStsz().nextSampleSize();
 				if(sampleSize == -1) {
+					System.out.println("sampleSizeが-1でした");
 					break;
 				}
 				if(timePos * 1000 / sond.getTimescale() > startPos && !isWriting) {
