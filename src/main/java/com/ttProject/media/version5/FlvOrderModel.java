@@ -203,7 +203,7 @@ public class FlvOrderModel {
 				// キーフレーム
 				vdeo.getStss().nextKeyFrame();
 			}
-			if(vTimePos * 1000 / vdeo.getTimescale() > startMilliSeconds) {
+			if(vTimePos * 1000 / vdeo.getTimescale() >= startMilliSeconds) {
 				// 書き込むべきデータ
 				VideoTag tag = new VideoTag();
 				tag.setCodec(CodecType.AVC);
@@ -217,6 +217,7 @@ public class FlvOrderModel {
 			int delta = vdeo.getStts().nextDuration();
 			if(delta == -1) {
 				// 最後まで読み込みが完了しているので、次のデータがとれない。
+				System.out.println("delta値を最後まで読み取ったのでおわりとします。");
 				break;
 			}
 			sourcePos += sampleSize;
@@ -224,6 +225,7 @@ public class FlvOrderModel {
 		}
 		// 一番最後まで処理して、データがもうない場合(stcoが切れた場合)vdeo = nullにしておく。
 		if(!vdeo.getStco().hasMore()) {
+			System.out.println("stcoのデータがこれ以上ないみたいです。");
 			orderManager.setNomoreVideo();
 			vdeo = null;
 		}
