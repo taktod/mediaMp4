@@ -61,6 +61,14 @@ public class Vdeo extends Atom implements IIndexAtom {
 	public int getTotalSampleCount() {
 		return totalSampleCount;
 	}
+	public int getTotalFlvSize() {
+		if(msh == null) {
+			return totalSampleCount * (11 + 4 + 1) + totalSize;
+		}
+		else {
+			return totalSampleCount * (11 + 4 + 5) + totalSize + msh.getSize() - 8 + 11 + 4 + 5;
+		}
+	}
 	public void setTimescale(int timescale) {
 		System.out.println("timescale:" + timescale);
 		this.timescale = timescale;

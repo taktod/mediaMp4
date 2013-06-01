@@ -63,6 +63,14 @@ public class Sond extends Atom implements IIndexAtom {
 	public int getTotalSampleCount() {
 		return totalSampleCount;
 	}
+	public int getTotalFlvSize() {
+		if(msh == null) {
+			return totalSampleCount * (11 + 4 + 1) + totalSize;
+		}
+		else {
+			return totalSampleCount * (11 + 4 + 2) + totalSize + msh.getSize() - 8 + 11 + 4 + 2;
+		}
+	}
 	public void setTimescale(int timescale) {
 		this.timescale = timescale;
 	}
