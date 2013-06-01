@@ -22,6 +22,10 @@ import com.ttProject.util.BufferUtil;
 public class Sond extends Atom implements IIndexAtom {
 	/** データサイズ */
 	private int size;
+	/** sample数 */
+	private int totalSampleCount;
+	/** データサイズ */
+	private int totalSize;
 	/** timescale値(1秒あたり何ticあるか) */
 	private int timescale;
 	/** サンプルレート */
@@ -52,6 +56,12 @@ public class Sond extends Atom implements IIndexAtom {
 	}
 	public int getSize() {
 		return size;
+	}
+	public int getTotalSize() {
+		return totalSize;
+	}
+	public int getTotalSampleCount() {
+		return totalSampleCount;
 	}
 	public void setTimescale(int timescale) {
 		this.timescale = timescale;
@@ -84,8 +94,10 @@ public class Sond extends Atom implements IIndexAtom {
 	public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
 			throws Exception {
 		ch.position(getPosition() + 8);
-		ByteBuffer buffer = BufferUtil.safeRead(ch, 17);
-		buffer.position(8);
+		ByteBuffer buffer = BufferUtil.safeRead(ch, 21);
+		buffer.position(4);
+		totalSampleCount = buffer.getInt();
+		totalSize = buffer.getInt();
 		timescale = buffer.getInt();
 		sampleRate = buffer.getInt();
 		channelCount = buffer.get();
@@ -118,11 +130,12 @@ public class Sond extends Atom implements IIndexAtom {
 	}
 	@Override
 	public void writeIndex(WritableByteChannel idx) throws Exception {
-		ByteBuffer buffer = ByteBuffer.allocate(25);
+		ByteBuffer buffer = ByteBuffer.allocate(29);
 		buffer.putInt(size); // サイズ
 		buffer.put("sond".getBytes()); // タグ
 		buffer.putInt(0); // version + flags
-		buffer.putInt(0); // resSize
+		buffer.putInt(0); // totalSampleCount
+		buffer.putInt(0); // totalSize
 		buffer.putInt(timescale); // timescale
 		buffer.putInt(sampleRate); // sampleRate
 		buffer.put(channelCount);

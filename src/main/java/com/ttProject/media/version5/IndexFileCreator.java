@@ -330,8 +330,8 @@ public class IndexFileCreator implements IAtomAnalyzer {
 						}
 					}
 				}
-//				System.out.println("video:" + sampleCount + "/" + totalSize);
 				idx.position(vdeo.getPosition() + 12);
+				BufferUtil.writeInt(idx, sampleCount);
 				BufferUtil.writeInt(idx, totalSize);
 				tmp.position(position + size);
 			}
@@ -359,8 +359,8 @@ public class IndexFileCreator implements IAtomAnalyzer {
 						}
 					}
 				}
-//				System.out.println("audio:" + sampleCount + "/" + totalSize);
 				idx.position(sond.getPosition() + 12);
+				BufferUtil.writeInt(idx, sampleCount);
 				BufferUtil.writeInt(idx, totalSize);
 				tmp.position(position + size);
 			}

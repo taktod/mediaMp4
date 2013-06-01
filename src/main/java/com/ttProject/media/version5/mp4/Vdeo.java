@@ -22,6 +22,10 @@ import com.ttProject.util.BufferUtil;
 public class Vdeo extends Atom implements IIndexAtom {
 	/** データサイズ */
 	private int size;
+	/** sample数 */
+	private int totalSampleCount;
+	/** データサイズ */
+	private int totalSize;
 	/** timescale値(1秒あたり何ticあるか) */
 	private int timescale;
 	/** mediaSequenceHeader */
@@ -50,6 +54,12 @@ public class Vdeo extends Atom implements IIndexAtom {
 	}
 	public int getSize() {
 		return size;
+	}
+	public int getTotalSize() {
+		return totalSize;
+	}
+	public int getTotalSampleCount() {
+		return totalSampleCount;
 	}
 	public void setTimescale(int timescale) {
 		System.out.println("timescale:" + timescale);
@@ -80,8 +90,10 @@ public class Vdeo extends Atom implements IIndexAtom {
 	public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
 			throws Exception {
 		ch.position(getPosition() + 8);
-		ByteBuffer buffer = BufferUtil.safeRead(ch, 12);
-		buffer.position(8);
+		ByteBuffer buffer = BufferUtil.safeRead(ch, 16);
+		buffer.position(4);
+		totalSampleCount = buffer.getInt();
+		totalSize = buffer.getInt();
 		timescale = buffer.getInt();
 		// ここから先がタグデータ
 		while(ch.position() < getPosition() + getSize()) {
@@ -115,12 +127,13 @@ public class Vdeo extends Atom implements IIndexAtom {
 	}
 	@Override
 	public void writeIndex(WritableByteChannel idx) throws Exception {
-		ByteBuffer buffer = ByteBuffer.allocate(20);
+		ByteBuffer buffer = ByteBuffer.allocate(24);
 		buffer.putInt(size); // サイズ
 		buffer.put("vdeo".getBytes()); // タグ
 		buffer.putInt(0); // version + flags
-		buffer.putInt(0); // resSize
-		buffer.putInt(timescale);
+		buffer.putInt(0); // totalSampleCount
+		buffer.putInt(0); // totalSize
+		buffer.putInt(timescale); // timescale
 		buffer.flip();
 		idx.write(buffer);
 	}
