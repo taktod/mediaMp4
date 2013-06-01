@@ -42,28 +42,49 @@ public class ContentsManager5 implements IContentsManager {
 			}
 		}
 		analyzer.updatePrevTag();
+		analyzer.checkDataSize();
 		analyzer.close();
 	}
+	private WritableByteChannel target = null;
 	@Override
-	public void accessMediaData(HttpServletRequest request,
-			HttpServletResponse response) throws Exception {
+	public void accessMediaData(final HttpServletRequest request,
+			final HttpServletResponse response) throws Exception {
 		System.out.println(request.getQueryString());
 		IFileReadChannel source = null, tmp = null;
+		int responseSize = 0;
 		try {
 			source = FileReadChannel.openFileReadChannel(uri);
 			tmp = FileReadChannel.openFileReadChannel(idxFile.getAbsolutePath());
-			FlvOrderModel orderModel = new FlvOrderModel(tmp, true, true, 0);
-			WritableByteChannel target = Channels.newChannel(response.getOutputStream());
-			orderModel.getFlvHeader().writeTag(target);
+			final FlvOrderModel orderModel = new FlvOrderModel(tmp, true, false, 0);
+			orderModel.addStartEvent(new IFlvStartEventListener() {
+				@Override
+				public void start(int responseSize) {
+					System.out.println("応答用のデータ準備した。:" + responseSize);
+					// 応答すべきデータ量が決定したときに処理される動作
+					// レスポンスデータ量とかが決定される。
+					response.setStatus(HttpServletResponse.SC_OK);
+					response.setContentLength(responseSize);
+					response.setContentType("video/x-flv");
+					try {
+						target = Channels.newChannel(response.getOutputStream());
+						orderModel.getFlvHeader().writeTag(target);
+					}
+					catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
 			List<Tag> tagList;
 			while((tagList = orderModel.nextTagList(source)) != null) {
 				for(Tag tag : tagList) {
+					responseSize += tag.getRealSize();
 					tag.writeTag(target);
 				}
 			}
 		}
 		catch (Exception e) {
 			e.printStackTrace();
+			System.out.println("応答したデータ量:" + responseSize);
 		}
 		finally {
 			if(source != null) {
