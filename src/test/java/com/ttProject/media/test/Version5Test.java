@@ -11,6 +11,7 @@ import com.ttProject.media.flv.Tag;
 import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.atom.Moov;
 import com.ttProject.media.version5.FlvOrderModel;
+import com.ttProject.media.version5.IFlvStartEventListener;
 import com.ttProject.media.version5.IndexFileCreator;
 import com.ttProject.nio.channels.FileReadChannel;
 import com.ttProject.nio.channels.IFileReadChannel;
@@ -52,10 +53,17 @@ public class Version5Test {
 			}
 		}
 		analyzer.updatePrevTag();
+		analyzer.checkDataSize();
 		analyzer.close();
 		IFileReadChannel tmp = FileReadChannel.openFileReadChannel(new File("output.tmp").getAbsolutePath());
 		// ここで開始位置、video要素、audio要素等の指定が可能になります。
-		FlvOrderModel orderModel = new FlvOrderModel(tmp, true, true, 30000);
+		FlvOrderModel orderModel = new FlvOrderModel(tmp, false, true, 3000);
+		orderModel.addStartEvent(new IFlvStartEventListener() {
+			@Override
+			public void start(int responseSize) {
+				System.out.println("responseSize:" + responseSize);
+			}
+		});
 		// 書き込み対象作成
 		FileChannel output = new FileOutputStream("target.flv").getChannel();
 		// header情報
@@ -69,7 +77,7 @@ public class Version5Test {
 			}
 		}
 		output.close();
-		tmp.close();
+		tmp.close();// */
 		fc.close();
 	}
 }
