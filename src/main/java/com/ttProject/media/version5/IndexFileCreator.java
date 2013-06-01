@@ -191,7 +191,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 						System.out.println("sampleRate:" + aac.getSampleRate());
 						System.out.println("channels:" + aac.getChannelCount());
 						long prevPos = idx.position();
-						idx.position(sond.getPosition() + 20);
+						idx.position(sond.getPosition() + 24);
 						buffer = ByteBuffer.allocate(5);
 						buffer.putInt(aac.getSampleRate());
 						buffer.put((byte)aac.getChannelCount());
