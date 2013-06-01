@@ -23,6 +23,8 @@ import com.ttProject.util.BufferUtil;
  * @author taktod
  */
 public class FlvOrderModel {
+	private IFlvStartEventListener startEventListener = null;
+	private int disposeDataSize = 0;
 	// 解析をすすめたい。
 	private Vdeo vdeo = null;
 	private Sond sond = null;
@@ -37,6 +39,9 @@ public class FlvOrderModel {
 	public FlvOrderModel(IFileReadChannel idxFile, boolean videoFlg, boolean soundFlg, int startMilliSecond) throws Exception {
 		this.startMilliSeconds = startMilliSecond;
 		initialize(idxFile, videoFlg, soundFlg);
+	}
+	public void addStartEvent(IFlvStartEventListener startEventListener) {
+		this.startEventListener = startEventListener;
 	}
 	/**
 	 * flvのheaderを応答しておく
@@ -141,6 +146,7 @@ public class FlvOrderModel {
 		}
 		while(result.size() > 0) {
 			Tag tag = result.get(0); // 先頭をとってみる。
+			MetaTag metaTag = null;
 			if(vdeo == null) {
 				// vdeoデータがない場合はaudioのみの動作になる。
 				// 先頭にmshのデータを追加してあとは普通に応答すればOK
@@ -150,17 +156,21 @@ public class FlvOrderModel {
 				}
 				// メタデータ用のmshをくっつけておく。
 				if(meta != null) {
-					MetaTag metaTag = meta.createFlvMetaTag();
+					metaTag = meta.createFlvMetaTag();
 					metaTag.setTimestamp(tag.getTimestamp());
 					result.add(0, metaTag);
 				}
 				startResponse = true;
+				if(startEventListener != null) {
+					startEventListener.start(13 + metaTag.getRealSize() + getSize());
+				}
 				break;
 			}
 			else {
 				// vdeoがある場合は動画のデータ
 				// keyFrameが来るまでデータを捨てる必要がある。
 				if(!(tag instanceof VideoTag) || !((VideoTag)tag).isKeyFrame()) {
+					disposeDataSize += tag.getRealSize();
 					result.remove(0); // 先頭のデータは必要ないので、捨てる
 					continue;
 				}
@@ -174,11 +184,14 @@ public class FlvOrderModel {
 					result.add(0, videoMshTag);
 				}
 				if(meta != null) {
-					MetaTag metaTag = meta.createFlvMetaTag();
+					metaTag = meta.createFlvMetaTag();
 					metaTag.setTimestamp(tag.getTimestamp());
 					result.add(0, metaTag);
 				}
 				startResponse = true;
+				if(startEventListener != null) {
+					startEventListener.start(13 + metaTag.getRealSize() + getSize());
+				}
 				break;
 			}
 		}
@@ -212,6 +225,9 @@ public class FlvOrderModel {
 				source.position(sourcePos);
 				tag.setData(source, sampleSize);
 				orderManager.addTag(tag);
+			}
+			else {
+				disposeDataSize += 11 + 4 + 1 + 4 + sampleSize;
 			}
 			// 時間を更新しておく。
 			int delta = vdeo.getStts().nextDuration();
@@ -258,6 +274,14 @@ public class FlvOrderModel {
 				tag.setData(source, sampleSize);
 				orderManager.addTag(tag);
 			}
+			else {
+				if(sond.getMsh() == null) {
+					disposeDataSize += 11 + 4 + 1 + sampleSize;
+				}
+				else {
+					disposeDataSize += 11 + 4 + 2 + sampleSize;
+				}
+			}
 			int delta = sond.getStts().nextDuration();
 			if(delta == -1) {
 				break;
@@ -272,5 +296,15 @@ public class FlvOrderModel {
 		else {
 			sond.getStco().nextChunkPos();
 		}
+	}
+	public int getSize() {
+		int size = 0;
+		if(vdeo != null) {
+			size += vdeo.getTotalFlvSize();
+		}
+		if(sond != null) {
+			size += sond.getTotalFlvSize();
+		}
+		return size - disposeDataSize;
 	}
 }
