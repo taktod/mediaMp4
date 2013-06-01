@@ -32,6 +32,7 @@ import com.ttProject.media.mp4.atom.stsd.record.H264;
 import com.ttProject.media.version5.mp4.Meta;
 import com.ttProject.media.version5.mp4.Sond;
 import com.ttProject.media.version5.mp4.Vdeo;
+import com.ttProject.nio.channels.FileReadChannel;
 import com.ttProject.nio.channels.IFileReadChannel;
 import com.ttProject.util.BufferUtil;
 
@@ -41,6 +42,7 @@ import com.ttProject.util.BufferUtil;
  */
 public class IndexFileCreator implements IAtomAnalyzer {
 	private FileChannel idx; // 書き込み対象ファイル
+	private final File targetFile;
 	private int trakStartPos; // トラックの開始位置
 	private CurrentType type = null; // 現在の処理trakタイプ
 	private Vdeo vdeo = null;
@@ -60,6 +62,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 	 * @throws Exception
 	 */
 	public IndexFileCreator(File targetFile) throws Exception {
+		this.targetFile = targetFile;
 		idx = new FileOutputStream(targetFile).getChannel();
 	}
 	@Override
@@ -245,6 +248,8 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			Stsz stsz = new Stsz(size, position);
 			buffer.position(0);
 			idx.write(buffer);
+			// この処理の部分を書き換えてサイズの計算を実施しておくべき。
+			// コピーしつつサイズの合計を調べておく。
 			BufferUtil.quickCopy(ch, idx, size - 8);
 			ch.position(position + size);
 			return stsz;
@@ -289,6 +294,81 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			meta.writeIndex(idx);
 			meta = null;
 		}
+	}
+	/**
+	 * 各要素の有用データ量を確認しておく
+	 */
+	public void checkDataSize() throws Exception {
+		IFileReadChannel tmp = FileReadChannel.openFileReadChannel(targetFile.getAbsolutePath());
+		while(tmp.position() < tmp.size()) {
+			int position = tmp.position();
+			ByteBuffer buffer = BufferUtil.safeRead(tmp, 8);
+			int size = buffer.getInt();
+			String tag = BufferUtil.getDwordText(buffer);
+			if("vdeo".equals(tag)) {
+				Vdeo vdeo = new Vdeo(size, position);
+				vdeo.analyze(tmp);
+				// 読み込み可能データ量を調べる
+				vdeo.getStco().start(tmp, false); // dataPos
+				vdeo.getStsc().start(tmp, false); // samples in chunk
+				vdeo.getStsz().start(tmp, false); // sample size
+				vdeo.getStts().start(tmp, false);
+				int totalSize = 0;
+				int sampleCount = 0;
+				while(vdeo.getStco().nextChunkPos() != -1) {
+					vdeo.getStsc().nextChunk();
+					int chunkSampleCount = vdeo.getStsc().getSampleCount();
+					for(int i = 0;i < chunkSampleCount;i ++) {
+						int sampleSize = vdeo.getStsz().nextSampleSize();
+						if(sampleSize == -1) {
+							break;
+						}
+						sampleCount ++;
+						totalSize += sampleSize;
+						if(vdeo.getStts().nextDuration() == -1) {
+							break;
+						}
+					}
+				}
+//				System.out.println("video:" + sampleCount + "/" + totalSize);
+				idx.position(vdeo.getPosition() + 12);
+				BufferUtil.writeInt(idx, totalSize);
+				tmp.position(position + size);
+			}
+			else if("sond".equals(tag)) {
+				Sond sond = new Sond(size, position);
+				sond.analyze(tmp);
+				sond.getStco().start(tmp, false); // dataPos
+				sond.getStsc().start(tmp, false); // samples in chunk
+				sond.getStsz().start(tmp, false); // sample size
+				sond.getStts().start(tmp, false);
+				int totalSize = 0;
+				int sampleCount = 0;
+				while(sond.getStco().nextChunkPos() != -1) {
+					sond.getStsc().nextChunk();
+					int chunkSampleCount = sond.getStsc().getSampleCount();
+					for(int i = 0;i < chunkSampleCount;i ++) {
+						int sampleSize = sond.getStsz().nextSampleSize();
+						if(sampleSize == -1) {
+							break;
+						}
+						sampleCount ++;
+						totalSize += sampleSize;
+						if(sond.getStts().nextDuration() == -1) {
+							break;
+						}
+					}
+				}
+//				System.out.println("audio:" + sampleCount + "/" + totalSize);
+				idx.position(sond.getPosition() + 12);
+				BufferUtil.writeInt(idx, totalSize);
+				tmp.position(position + size);
+			}
+			else {
+				tmp.position(position + size);
+			}
+		}
+		tmp.close();
 	}
 	public void close() {
 		if(idx != null) {
