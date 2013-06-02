@@ -1,12 +1,14 @@
 package com.ttProject.media.version5;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.ttProject.media.flv.CodecType;
 import com.ttProject.media.flv.FlvHeader;
 import com.ttProject.media.flv.FlvTagOrderManager;
 import com.ttProject.media.flv.Tag;
+import com.ttProject.media.flv.amf.Amf0Object;
 import com.ttProject.media.flv.tag.AudioTag;
 import com.ttProject.media.flv.tag.MetaTag;
 import com.ttProject.media.flv.tag.VideoTag;
@@ -20,11 +22,17 @@ import com.ttProject.util.BufferUtil;
  * mp4からflvのデータを取り出すモデル
  * flvTagの状態で取り出したい。
  * 一度つかったら2度とつかえませんので、2度目やる場合はnewしなおしてください。
+ * 
+ * keyFramesのデータに嘘をいれて、flowplayerで動作できるように調整しておきました。
  * @author taktod
  */
 public class FlvOrderModel {
+	/** 終了イベントの取得動作用 */
 	private IFlvStartEventListener startEventListener = null;
+	/** 処理途上で捨てたデータのサイズ保持 */
 	private int disposeDataSize = 0;
+	/** 分割用 */
+	private int divCount = 30;
 	// 解析をすすめたい。
 	private Vdeo vdeo = null;
 	private Sond sond = null;
@@ -158,6 +166,18 @@ public class FlvOrderModel {
 				if(meta != null) {
 					metaTag = meta.createFlvMetaTag();
 					metaTag.setTimestamp(tag.getTimestamp());
+					// injectテスト
+					Amf0Object<String, List<Double>> keyframes = new Amf0Object<String, List<Double>>();
+					List<Double> times = new ArrayList<Double>();
+					List<Double> filepositions = new ArrayList<Double>();
+					int delta = (int)(meta.getDuration() / divCount);
+					for(int i = 0;i < meta.getDuration();i += delta) {
+						times.add(i * 0.001);
+						filepositions.add(i * 1.0);
+					}
+					keyframes.put("times", times);
+					keyframes.put("filepositions", filepositions);
+					metaTag.putData("keyframes", keyframes);
 					result.add(0, metaTag);
 				}
 				startResponse = true;
@@ -186,6 +206,20 @@ public class FlvOrderModel {
 				if(meta != null) {
 					metaTag = meta.createFlvMetaTag();
 					metaTag.setTimestamp(tag.getTimestamp());
+					// injectテスト
+					Amf0Object<String, List<Double>> keyframes = new Amf0Object<String, List<Double>>();
+					List<Double> times = new ArrayList<Double>();
+					List<Double> filepositions = new ArrayList<Double>();
+					// この部分がおおきすぎるとoverflowするらしい。こまったもんだ。
+					int delta = (int)(meta.getDuration() / divCount);
+					System.out.println("delta:" + delta);
+					for(int i = 0;i < meta.getDuration();i += delta) {
+						times.add(i * 0.001);
+						filepositions.add(i * 1.0);
+					}
+					keyframes.put("times", times);
+					keyframes.put("filepositions", filepositions);
+					metaTag.putData("keyframes", keyframes);
 					result.add(0, metaTag);
 				}
 				startResponse = true;
