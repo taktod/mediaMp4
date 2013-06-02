@@ -298,7 +298,7 @@ public class ContentsManager4 implements IContentsManager {
 			idxChannel = FileReadChannel.openFileReadChannel(idxFile.getAbsolutePath());
 			hdrChannel = FileReadChannel.openFileReadChannel(hdrFile.getAbsolutePath());
 			channel = Channels.newChannel(response.getOutputStream());
-			responseHeader(request, response, idxChannel, hdrChannel, channel);
+			responseHeader(request, response, idxChannel, hdrChannel, channel, startTime);
 		}
 		catch (Exception e) {
 //			e.printStackTrace();
@@ -324,7 +324,8 @@ public class ContentsManager4 implements IContentsManager {
 			IFileReadChannel idxChannel,
 			IFileReadChannel hdrChannel,
 			WritableByteChannel channel,
-			int start, int end) throws Exception {
+			int start, int end, long startTime) throws Exception {
+		boolean responseStart= false;
 		ByteBuffer buffer;
 		// 実データを取得する動作
 		while(true) {
@@ -343,6 +344,10 @@ public class ContentsManager4 implements IContentsManager {
 				return;
 			}
 			start += buffer.remaining();
+			if(!responseStart) {
+				responseStart = true;
+				System.out.println("responseStart1:" + (System.currentTimeMillis() -  startTime));
+			}
 			channel.write(buffer);
 		}
 		// headerのファイル外を読み込むことになった。
@@ -373,6 +378,10 @@ public class ContentsManager4 implements IContentsManager {
 					break;
 				}
 				// chunkToRead分読み込む
+				if(!responseStart) {
+					responseStart = true;
+					System.out.println("responseStart2:" + (System.currentTimeMillis() -  startTime));
+				}
 				BufferUtil.quickCopy(source, channel, chunkToRead);
 				start += chunkToRead;
 				// スキップすべきデータ量をスキップする。
@@ -410,7 +419,7 @@ public class ContentsManager4 implements IContentsManager {
 			HttpServletResponse response,
 			IFileReadChannel idxChannel,
 			IFileReadChannel hdrChannel,
-			WritableByteChannel channel) throws Exception {
+			WritableByteChannel channel, long startTime) throws Exception {
 		// まず応答ヘッダをつくる。
 		String range = request.getHeader("Range");
 		int contentLength = BufferUtil.safeRead(idxChannel, 4).getInt();
@@ -446,6 +455,7 @@ public class ContentsManager4 implements IContentsManager {
 		response.addHeader("ETag", "12345" + uri);
 		response.addHeader("Accept-Ranges", "bytes");
 		response.setContentType("audio/mp4");
-		responseData(request, response, idxChannel, hdrChannel, channel, start, end);
+		System.out.println("responseHeader is finished:" + (System.currentTimeMillis() - startTime));
+		responseData(request, response, idxChannel, hdrChannel, channel, start, end, startTime);
 	}
 }
