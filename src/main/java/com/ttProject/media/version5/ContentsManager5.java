@@ -49,13 +49,18 @@ public class ContentsManager5 implements IContentsManager {
 	@Override
 	public void accessMediaData(final HttpServletRequest request,
 			final HttpServletResponse response) throws Exception {
-		System.out.println(request.getQueryString());
+//		System.out.println(request.getQueryString());
+		String startPos = request.getParameter("start");
+		if(startPos == null) {
+			startPos = "0";
+		}
+		System.out.println(startPos);
 		IFileReadChannel source = null, tmp = null;
 		int responseSize = 0;
 		try {
 			source = FileReadChannel.openFileReadChannel(uri);
 			tmp = FileReadChannel.openFileReadChannel(idxFile.getAbsolutePath());
-			final FlvOrderModel orderModel = new FlvOrderModel(tmp, true, false, 0);
+			final FlvOrderModel orderModel = new FlvOrderModel(tmp, true, true, Integer.parseInt(startPos));
 			orderModel.addStartEvent(new IFlvStartEventListener() {
 				@Override
 				public void start(int responseSize) {
@@ -83,7 +88,7 @@ public class ContentsManager5 implements IContentsManager {
 			}
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 			System.out.println("応答したデータ量:" + responseSize);
 		}
 		finally {
