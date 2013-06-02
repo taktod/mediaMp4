@@ -301,7 +301,7 @@ public class ContentsManager4 implements IContentsManager {
 			responseHeader(request, response, idxChannel, hdrChannel, channel);
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 		finally {
 			idxChannel = ChannelUtil.safeClose(idxChannel);
