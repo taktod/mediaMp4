@@ -77,7 +77,7 @@ public class Version5Test {
 			}
 		}
 		output.close();
-		tmp.close();// */
+		tmp.close();
 		fc.close();
 	}
 }
