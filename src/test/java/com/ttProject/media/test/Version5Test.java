@@ -57,7 +57,7 @@ public class Version5Test {
 		analyzer.close();
 		IFileReadChannel tmp = FileReadChannel.openFileReadChannel(new File("output.tmp").getAbsolutePath());
 		// ここで開始位置、video要素、audio要素等の指定が可能になります。
-		FlvOrderModel orderModel = new FlvOrderModel(tmp, false, true, 3000);
+		FlvOrderModel orderModel = new FlvOrderModel(tmp, true, true, 6000);
 		orderModel.addStartEvent(new IFlvStartEventListener() {
 			@Override
 			public void start(int responseSize) {
