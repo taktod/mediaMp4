@@ -35,6 +35,8 @@ import com.ttProject.util.TmpFile;
 /**
  * mp4のデータから映像の部分を撤去して応答するプログラム
  * @author taktod
+ * stcoReaderもstco.startで読み込む形に変更した方が動作がはやくなりそう。
+ * idxChannelの読み込みの部分もCacheBufferに変更した方が動作がはやくなりそう。
  */
 public class ContentsManager4 implements IContentsManager {
 	/** 替わりに設定するftyp値 */

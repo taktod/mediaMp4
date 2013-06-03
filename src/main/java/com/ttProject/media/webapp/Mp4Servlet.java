@@ -29,6 +29,7 @@ public class Mp4Servlet extends HttpServlet {
 			manager2 = new ContentsManager2("http://49.212.39.17/rtype.mp4");
 		}
 		catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 	/**
