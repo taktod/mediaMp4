@@ -2,3 +2,6 @@
 /.settings
 /.project
 /target
+*.tmp
+*.flv
+*.mp4
