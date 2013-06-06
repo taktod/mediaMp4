@@ -26,7 +26,6 @@ import com.ttProject.media.mp4.atom.Tkhd;
 import com.ttProject.media.mp4.atom.Trak;
 import com.ttProject.media.mp4.atom.Udta;
 import com.ttProject.media.version.IContentsManager;
-import com.ttProject.nio.CacheBuffer;
 import com.ttProject.nio.channels.FileReadChannel;
 import com.ttProject.nio.channels.IFileReadChannel;
 import com.ttProject.util.BufferUtil;
@@ -163,6 +162,8 @@ public class ContentsManager4 implements IContentsManager {
 			buffer = BufferUtil.safeRead(stcoReader, 12);
 			hdr.write(buffer);
 			buffer = BufferUtil.safeRead(stcoReader, 4);
+			int stcoCount = buffer.getInt();
+			buffer.position(0);
 			hdr.write(buffer);
 			buffer.position(0); // stcoのcountはhdrにも書き込んでおく。
 			idx.write(buffer);
@@ -299,10 +300,9 @@ public class ContentsManager4 implements IContentsManager {
 		// 等々レスポンスの部分をつくっていきます。
 		try {
 			idxChannel = FileReadChannel.openFileReadChannel(idxFile.getAbsolutePath());
-			CacheBuffer idxBuffer = new CacheBuffer(idxChannel, idxChannel.size());
 			hdrChannel = FileReadChannel.openFileReadChannel(hdrFile.getAbsolutePath());
 			channel = Channels.newChannel(response.getOutputStream());
-			responseHeader(request, response, idxBuffer, hdrChannel, channel, startTime);
+			responseHeader(request, response, idxChannel, hdrChannel, channel, startTime);
 		}
 		catch (Exception e) {
 //			e.printStackTrace();
@@ -325,7 +325,7 @@ public class ContentsManager4 implements IContentsManager {
 	 */
 	private void responseData(HttpServletRequest request,
 			HttpServletResponse response,
-			CacheBuffer idxBuffer,
+			IFileReadChannel idxChannel,
 			IFileReadChannel hdrChannel,
 			WritableByteChannel channel,
 			int start, int end, long startTime) throws Exception {
@@ -355,14 +355,15 @@ public class ContentsManager4 implements IContentsManager {
 			channel.write(buffer);
 		}
 		// headerのファイル外を読み込むことになった。
-		idxBuffer.getInt(); // 4バイト余分にあるので捨てる必要がある。
+		idxChannel.position(8);
 		int newStart;
 		int originalStart;
 		int chunkSize;
 		while(true) {
-			newStart = idxBuffer.getInt();
-			originalStart = idxBuffer.getInt();
-			chunkSize = idxBuffer.getInt();
+			buffer = BufferUtil.safeRead(idxChannel, 12);
+			newStart = buffer.getInt();
+			originalStart = buffer.getInt();
+			chunkSize = buffer.getInt();
 			if(newStart <= start && start < newStart + chunkSize) {
 				// 開始位置が元のデータのchunkの中になっている部分発見
 				break;
@@ -389,15 +390,16 @@ public class ContentsManager4 implements IContentsManager {
 				start += chunkToRead;
 				// スキップすべきデータ量をスキップする。
 				// 次の位置を読み込んで
-				if(idxBuffer.remaining() == 0) {
+				if(idxChannel.position() == idxChannel.size()) {
 					return;
 				}
-				newStart = idxBuffer.getInt();
+				buffer = BufferUtil.safeRead(idxChannel, 12);
+				newStart = buffer.getInt();
 				int prevOriginalStart = originalStart;
 				int prevSize = chunkSize;
-				originalStart = idxBuffer.getInt();
-				chunkSize = idxBuffer.getInt();
-				BufferUtil.quickDispose(source, originalStart - prevOriginalStart - prevSize);
+				originalStart = buffer.getInt();
+				chunkSize = buffer.getInt();
+				buffer = BufferUtil.safeRead(source, originalStart - prevOriginalStart - prevSize);
 				chunkToRead = chunkSize;
 			}
 		}
@@ -419,12 +421,12 @@ public class ContentsManager4 implements IContentsManager {
 	 */
 	private void responseHeader(HttpServletRequest request,
 			HttpServletResponse response,
-			CacheBuffer idxBuffer,
+			IFileReadChannel idxChannel,
 			IFileReadChannel hdrChannel,
 			WritableByteChannel channel, long startTime) throws Exception {
 		// まず応答ヘッダをつくる。
 		String range = request.getHeader("Range");
-		int contentLength = idxBuffer.getInt();
+		int contentLength = BufferUtil.safeRead(idxChannel, 4).getInt();
 		int start = 0;
 		int end = 0;
 		if(range == null) {
@@ -457,6 +459,7 @@ public class ContentsManager4 implements IContentsManager {
 		response.addHeader("ETag", "12345" + uri);
 		response.addHeader("Accept-Ranges", "bytes");
 		response.setContentType("audio/mp4");
-		responseData(request, response, idxBuffer, hdrChannel, channel, start, end, startTime);
+		System.out.println("responseHeader is finished:" + (System.currentTimeMillis() - startTime));
+		responseData(request, response, idxChannel, hdrChannel, channel, start, end, startTime);
 	}
 }
