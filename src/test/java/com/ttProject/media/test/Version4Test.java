@@ -31,6 +31,7 @@ import com.ttProject.nio.channels.FileReadChannel;
 import com.ttProject.nio.channels.IFileReadChannel;
 import com.ttProject.util.BufferUtil;
 
+@SuppressWarnings("unused")
 public class Version4Test {
 	ExecutorService es = Executors.newCachedThreadPool();
 	/** 替わりに設定するftyp値 */
@@ -50,7 +51,7 @@ public class Version4Test {
 	private Stsz stsz = null;
 	private Stco stco = null;
 	private Co64 co64 = null;
-	@Test
+//	@Test
 	public void tttest() throws Exception {
 		System.out.println(System.getProperty("java.io.tmpdir"));
 //		System.out.println("start");
@@ -79,6 +80,7 @@ public class Version4Test {
 		}
 		System.out.println("end");
 	}
+//	@Test
 	public void test() throws Exception {
 		// 前の出力があったら邪魔なので削除する。
 		new File(output).delete();
@@ -192,6 +194,7 @@ public class Version4Test {
 		buffer.flip();
 		idx.write(buffer);*/
 
+		// この動作はちょっと危険
 		pos = size + ftyp.length + 8; // データの開始位置をいれておく。
 		IFileReadChannel stscReader = FileReadChannel.openFileReadChannel(this.target);
 		IFileReadChannel stszReader = FileReadChannel.openFileReadChannel(this.target);

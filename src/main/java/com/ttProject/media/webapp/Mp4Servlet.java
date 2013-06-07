@@ -23,10 +23,25 @@ public class Mp4Servlet extends HttpServlet {
 	 */
 	public Mp4Servlet() {
 		try {
-			manager5 = new ContentsManager5("http://49.212.39.17/rtype.mp4");
-			manager4 = new ContentsManager4("http://49.212.39.17/rtype.mp4");
-			manager3 = new ContentsManager3("http://49.212.39.17/rtype.mp4");
-			manager2 = new ContentsManager2("http://49.212.39.17/rtype.mp4");
+			manager5 = new ContentsManager5("http://49.212.39.17/mario.mp4");
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		try {
+			manager4 = new ContentsManager4("http://49.212.39.17/mario.mp4");
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		try {
+			manager3 = new ContentsManager3("http://49.212.39.17/mario.mp4");
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		try {
+			manager2 = new ContentsManager2("http://49.212.39.17/mario.mp4");
 		}
 		catch (Exception e) {
 			e.printStackTrace();

@@ -156,19 +156,14 @@ public class ContentsManager4 implements IContentsManager {
 			}
 			// stcoまでおわっているはず。
 			// 残りはstcoの書き込みとidxファイルの作成
-			IFileReadChannel stcoReader = source;
-			stcoReader.position(stco.getPosition());
-			// stcoの先頭部分コピー
-			buffer = BufferUtil.safeRead(stcoReader, 12);
+			source.position(stco.getPosition());
+			buffer = BufferUtil.safeRead(source, 16);
 			hdr.write(buffer);
-			buffer = BufferUtil.safeRead(stcoReader, 4);
+			stco.start(source, false);
+			buffer.position(12);
 			int stcoCount = buffer.getInt();
-			buffer.position(0);
-			hdr.write(buffer);
-			buffer.position(0); // stcoのcountはhdrにも書き込んでおく。
-			idx.write(buffer);
-
-			// stcoのindex
+			BufferUtil.writeInt(idx, stcoCount);
+			// stcoデータ開始位置
 			pos = ftyp.length + moovSize + 8; // もともとのデータのある位置(開始位置みたいなもの)
 			
 			stsc.start(new FileReadChannel(hdrFile), false);
@@ -176,22 +171,24 @@ public class ContentsManager4 implements IContentsManager {
 			// chunksizeを計算したい。
 			int mdatSize = 0; // mdatのサイズ計算用
 			// 次のチャンクがあるかぎり読み込みなおす。
-			while(stsc.nextChunk() != -1) {
-				// このチャンクに対応したsample数を取り出す。
-				stsc.getSampleCount(); // この数分sampleサイズをしる必要がある。
+			while(stco.nextChunkPos() != -1) {
+				stsc.nextChunk();
 				int chunkSize = 0;
 				for(int i = 0;i < stsc.getSampleCount();i ++) {
 					if(stsz.nextSampleSize() == -1) {
-						throw new RuntimeException("stszが尽きました.");
+						throw new Exception("stszのデータがなくなりました。");
 					}
 					chunkSize += stsz.getSampleSize();
 				}
-				BufferUtil.writeInt(hdr, pos);
-				// idx 新しい位置 元の位置 サイズ
-				BufferUtil.writeInt(idx, pos);
-				idx.write(BufferUtil.safeRead(stcoReader, 4));
-				BufferUtil.writeInt(idx, chunkSize);
-				pos += chunkSize;
+				// chunkSizeがstcoがもつべきデータサイズ
+				BufferUtil.writeInt(hdr, pos); // moovの内部のデータ(読み込み始めの位置)
+				buffer = ByteBuffer.allocate(12);
+				buffer.putInt(pos); // 新しいファイル上の位置
+				buffer.putInt(stco.getChunkPos()); // 旧ファイル上の位置
+				buffer.putInt(chunkSize); // 読み込むデータ量
+				buffer.flip();
+				idx.write(buffer);
+				pos += chunkSize; // chunkSize分
 				mdatSize += chunkSize;
 			}
 			// mdatの先頭の部分を書き込んでおく。
