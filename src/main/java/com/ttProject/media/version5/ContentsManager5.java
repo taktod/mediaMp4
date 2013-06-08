@@ -45,7 +45,6 @@ public class ContentsManager5 implements IContentsManager {
 		analyzer.checkDataSize();
 		analyzer.close();
 	}
-	private WritableByteChannel target = null;
 	@Override
 	public void accessMediaData(final HttpServletRequest request,
 			final HttpServletResponse response) throws Exception {
@@ -58,6 +57,7 @@ public class ContentsManager5 implements IContentsManager {
 		IFileReadChannel source = null, tmp = null;
 		int responseSize = 0;
 		try {
+			final WritableByteChannel target = Channels.newChannel(response.getOutputStream());
 			source = FileReadChannel.openFileReadChannel(uri);
 			tmp = FileReadChannel.openFileReadChannel(idxFile.getAbsolutePath());
 			final FlvOrderModel orderModel = new FlvOrderModel(tmp, true, true, Integer.parseInt(startPos));
@@ -71,7 +71,6 @@ public class ContentsManager5 implements IContentsManager {
 					response.setContentLength(responseSize);
 					response.setContentType("video/x-flv");
 					try {
-						target = Channels.newChannel(response.getOutputStream());
 						orderModel.getFlvHeader().writeTag(target);
 					}
 					catch (Exception e) {

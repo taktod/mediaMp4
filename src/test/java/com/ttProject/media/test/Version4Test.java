@@ -203,7 +203,6 @@ public class Version4Test {
 		stszReader.position(stsz.getPosition() + 12);
 		// stszの値はとりあえず無視しておく。(ただしいと思っておく)
 		int stszConstant = BufferUtil.safeRead(stszReader, 4).getInt();
-		@SuppressWarnings("unused")
 		int stszCount = BufferUtil.safeRead(stszReader, 4).getInt();
 		// stcoの内容を構築していきます。(co64の場合もあり)
 		// 元のデータがどこからか？という情報も必要(アクセス用)
