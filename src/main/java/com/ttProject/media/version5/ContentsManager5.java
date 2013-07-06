@@ -81,7 +81,7 @@ public class ContentsManager5 implements IContentsManager {
 			List<Tag> tagList;
 			while((tagList = orderModel.nextTagList(source)) != null) {
 				for(Tag tag : tagList) {
-					responseSize += tag.getRealSize();
+					responseSize += tag.getSize();
 					tag.writeTag(target);
 				}
 			}

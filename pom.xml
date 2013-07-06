@@ -64,7 +64,7 @@
     </dependency>
     <dependency>
       <groupId>com.ttProject</groupId>
-      <artifactId>myLib.flv</artifactId>
+      <artifactId>myLib.media.flv</artifactId>
       <version>0.0.2-SNAPSHOT</version>
     </dependency>
   </dependencies>

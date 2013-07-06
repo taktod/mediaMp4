@@ -182,7 +182,7 @@ public class FlvOrderModel {
 				}
 				startResponse = true;
 				if(startEventListener != null) {
-					startEventListener.start(13 + metaTag.getRealSize() + getSize());
+					startEventListener.start(13 + metaTag.getSize() + getSize());
 				}
 				break;
 			}
@@ -190,7 +190,7 @@ public class FlvOrderModel {
 				// vdeoがある場合は動画のデータ
 				// keyFrameが来るまでデータを捨てる必要がある。
 				if(!(tag instanceof VideoTag) || !((VideoTag)tag).isKeyFrame()) {
-					disposeDataSize += tag.getRealSize();
+					disposeDataSize += tag.getSize();
 					result.remove(0); // 先頭のデータは必要ないので、捨てる
 					continue;
 				}
@@ -224,7 +224,7 @@ public class FlvOrderModel {
 				}
 				startResponse = true;
 				if(startEventListener != null) {
-					startEventListener.start(13 + metaTag.getRealSize() + getSize());
+					startEventListener.start(13 + metaTag.getSize() + getSize());
 				}
 				break;
 			}
