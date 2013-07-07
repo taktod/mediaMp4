@@ -48,6 +48,10 @@ public class FlvOrderModel {
 		this.startMilliSeconds = startMilliSecond;
 		initialize(idxFile, videoFlg, soundFlg);
 	}
+	/**
+	 * 開始位置イベントリスナーを設定しておきます。
+	 * @param startEventListener
+	 */
 	public void addStartEvent(IFlvStartEventListener startEventListener) {
 		this.startEventListener = startEventListener;
 	}
@@ -62,9 +66,17 @@ public class FlvOrderModel {
 		flvHeader.setAudioFlg(sond != null);
 		return flvHeader;
 	}
+	/**
+	 * 映像のmshデータを参照します
+	 * @return
+	 */
 	public VideoTag getVideoMsh() {
 		return videoMshTag;
 	}
+	/**
+	 * 音声のmshデータを参照します
+	 * @return
+	 */
 	public AudioTag getAudioMsh() {
 		return audioMshTag;
 	}
@@ -79,20 +91,20 @@ public class FlvOrderModel {
 			String tag = BufferUtil.getDwordText(buffer);
 			if("vdeo".equals(tag)) {
 				if(videoFlg) {
-					vdeo = new Vdeo(size, position);
+					vdeo = new Vdeo(position, size);
 					vdeo.analyze(tmp);
 				}
 				tmp.position(position + size);
 			}
 			else if("sond".equals(tag)) {
 				if(soundFlg) {
-					sond = new Sond(size, position);
+					sond = new Sond(position, size);
 					sond.analyze(tmp);
 				}
 				tmp.position(position + size);
 			}
 			else if("meta".equals(tag)) {
-				meta = new Meta(size, position);
+				meta = new Meta(position, size);
 				meta.analyze(tmp);
 				tmp.position(position + size);
 			}

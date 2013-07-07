@@ -25,8 +25,8 @@ public class Meta extends Atom implements IIndexAtom {
 	 * @param size
 	 * @param position
 	 */
-	public Meta(int size, int position) {
-		super(Meta.class.getSimpleName().toLowerCase(), size, position);
+	public Meta(int position, int size) {
+		super(Meta.class.getSimpleName().toLowerCase(), position, size);
 	}
 	public int getHeight() {
 		return height;

@@ -80,7 +80,7 @@ public class Version4Test {
 		}
 		System.out.println("end");
 	}
-//	@Test
+	@Test
 	public void test() throws Exception {
 		// 前の出力があったら邪魔なので削除する。
 		new File(output).delete();
@@ -165,7 +165,8 @@ public class Version4Test {
 				target.write(buffer);
 			}
 			else {
-				aa.copy(fc, target);
+				fc.position(aa.getPosition());
+				BufferUtil.quickCopy(fc, target, aa.getSize());
 			}
 		}
 		// stcoから16バイトコピーしておく。

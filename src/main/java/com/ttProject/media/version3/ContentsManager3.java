@@ -95,7 +95,7 @@ public class ContentsManager3 implements IAtomAnalyzer, IContentsManager {
 		buffer.get(name);
 		String tag = (new String(name)).toLowerCase();
 		if("tkhd".equals(tag)) {
-			Tkhd tkhd = new Tkhd(size, position);
+			Tkhd tkhd = new Tkhd(position, size);
 			tkhd.analyze(ch);
 			if(tkhd.getVolume() != 0) {
 				// 音声トラックの位置をみつけた。
@@ -105,20 +105,20 @@ public class ContentsManager3 implements IAtomAnalyzer, IContentsManager {
 			return tkhd;
 		}
 		if("trak".equals(tag)) {
-			Trak trak = new Trak(size, position);
+			Trak trak = new Trak(position, size);
 			trak.analyze(ch, this);
 			ch.position(position + size);
 			currentTrak = trak;
 			return trak;
 		}
 		if("moov".equals(tag)) {
-			Moov moov = new Moov(size, position);
+			Moov moov = new Moov(position, size);
 			moov.analyze(ch, this);
 			ch.position(position + size);
 			return moov;
 		}
 		// 適当なクラスをつくっておく。
-		Atom atom = new Atom(tag, size, position) {
+		Atom atom = new Atom(tag, position, size) {
 			@Override
 			public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
 					throws Exception {

@@ -14,8 +14,8 @@ public class Msh extends Atom {
 	 * @param size
 	 * @param position
 	 */
-	public Msh(int size, int position) {
-		super("msh ", size, position);
+	public Msh(int position, int size) {
+		super("msh ", position, size);
 	}
 	/**
 	 * {@inheritDoc}

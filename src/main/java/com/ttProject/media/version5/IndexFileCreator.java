@@ -77,27 +77,27 @@ public class IndexFileCreator implements IAtomAnalyzer {
 		Type type = Type.getType(tag);
 		switch(type) {
 		case Ftyp:
-			Ftyp ftyp = new Ftyp(size, position);
+			Ftyp ftyp = new Ftyp(position, size);
 			ch.position(position + size);
 			return ftyp;
 		case Moov:
-			Moov moov = new Moov(size, position);
+			Moov moov = new Moov(position, size);
 			moov.analyze(ch, this);
 			ch.position(position + size);
 			return moov;
 /*		case Mvhd:
-			Mvhd mvhd = new Mvhd(size, position);
+			Mvhd mvhd = new Mvhd(position, size);
 			// とりあえず解析せずほっとく
 			ch.position(position + size);
 			return mvhd;
 /*		case Iods: // 消す候補
 			// iodsは必要ないと思う。消す。
-			Iods iods = new Iods(size, position);
+			Iods iods = new Iods(position, size);
 			ch.position(position + size);
 			return iods;
 		case Udta: // 消す候補
 			// udtaはいらない。
-			Udta udta = new Udta(size, position);
+			Udta udta = new Udta(position, size);
 			ch.position(position + size);
 			return udta;*/
 		case Trak:
@@ -105,67 +105,67 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			this.type = null;
 			// trakの開始位置を調べる。
 			this.trakStartPos = (int)idx.position();
-			Trak trak = new Trak(size, position);
+			Trak trak = new Trak(position, size);
 			trak.analyze(ch, this);
 			ch.position(position + size);
 			return trak;
 		case Tkhd: // 今回はこれがいる。
-			tkhd = new Tkhd(size, position);
+			tkhd = new Tkhd(position, size);
 			tkhd.analyze(ch);
 			ch.position(position + size);
 			return tkhd;
 		case Mdia:
-			Mdia mdia = new Mdia(size, position);
+			Mdia mdia = new Mdia(position, size);
 			mdia.analyze(ch, this);
 			ch.position(position + size);
 			return mdia;
 		case Mdhd:
-			mdhd = new Mdhd(size, position);
+			mdhd = new Mdhd(position, size);
 			mdhd.analyze(ch, null);
 			ch.position(position + size);
 			if(tkhd.getHeight() != 0 && tkhd.getWidth() != 0) {
-				meta = new Meta(28, this.trakStartPos);
+				meta = new Meta(this.trakStartPos, 28);
 				meta.setHeight(tkhd.getHeight());
 				meta.setWidth(tkhd.getWidth());
 				meta.setDuration(mdhd.getDuration() * 1000 / mdhd.getTimescale());
 			}
 			return mdhd;
 /*		case Hdlr:
-			Hdlr hdlr = new Hdlr(size, position);
+			Hdlr hdlr = new Hdlr(position, size);
 			ch.position(position + size);
 			return hdlr;*/
 		case Minf:
-			Minf minf = new Minf(size, position);
+			Minf minf = new Minf(position, size);
 			minf.analyze(ch, this);
 			ch.position(position + size);
 			return minf;
 		case Vmhd:
 			this.type = CurrentType.VIDEO;
-			this.vdeo = new Vdeo(0, this.trakStartPos);
+			this.vdeo = new Vdeo(this.trakStartPos, 0);
 			this.vdeo.setTimescale(mdhd.getTimescale());
 			this.vdeo.writeIndex(idx);
-			Vmhd vmhd = new Vmhd(size, position);
+			Vmhd vmhd = new Vmhd(position, size);
 			ch.position(position + size);
 			return vmhd;
 		case Smhd:
 			this.type = CurrentType.AUDIO;
-			this.sond = new Sond(0, this.trakStartPos);
+			this.sond = new Sond(this.trakStartPos, 0);
 			this.sond.setTimescale(mdhd.getTimescale());
 			this.sond.writeIndex(idx);
-			Smhd smhd = new Smhd(size, position);
+			Smhd smhd = new Smhd(position, size);
 			ch.position(position + size);
 			return smhd;
 /*		case Dinf:
-			Dinf dinf = new Dinf(size, position);
+			Dinf dinf = new Dinf(position, size);
 			ch.position(position + size);
 			return dinf;*/
 		case Stbl:
-			Stbl stbl = new Stbl(size, position);
+			Stbl stbl = new Stbl(position, size);
 			stbl.analyze(ch, this);
 			ch.position(position + size);
 			return stbl;
 		case Stsd:
-			Stsd stsd = new Stsd(size, position);
+			Stsd stsd = new Stsd(position, size);
 			try {
 				stsd.analyze(ch, new RecordAnalyzer());
 				// 適合している場合はmshを取り出す。
@@ -221,7 +221,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			ch.position(position + size);
 			return stsd;
 		case Stts:
-			Stts stts = new Stts(size, position);
+			Stts stts = new Stts(position, size);
 			buffer.position(0);
 			idx.write(buffer);
 			BufferUtil.quickCopy(ch, idx, size - 8);
@@ -229,7 +229,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			return stts;
 		case Stss: // keyFrameのデータになる必須
 			// 映像の場合はkeyFrame指示になるっぽい
-			Stss stss = new Stss(size, position);
+			Stss stss = new Stss(position, size);
 			buffer.position(0);
 			idx.write(buffer);
 			BufferUtil.quickCopy(ch, idx, size - 8);
@@ -237,7 +237,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			return stss;
 		case Stsc:
 			// 各チャンクのサンプル量
-			Stsc stsc = new Stsc(size, position);
+			Stsc stsc = new Stsc(position, size);
 			buffer.position(0);
 			idx.write(buffer);
 			BufferUtil.quickCopy(ch, idx, size - 8);
@@ -245,7 +245,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			return stsc;
 		case Stsz:
 			// サンプルのサイズ量
-			Stsz stsz = new Stsz(size, position);
+			Stsz stsz = new Stsz(position, size);
 			buffer.position(0);
 			idx.write(buffer);
 			// この処理の部分を書き換えてサイズの計算を実施しておくべき。
@@ -255,20 +255,20 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			return stsz;
 		case Stco:
 			// 各チャンクの開始位置
-			Stco stco = new Stco(size, position);
+			Stco stco = new Stco(position, size);
 			buffer.position(0);
 			idx.write(buffer);
 			BufferUtil.quickCopy(ch, idx, size - 8);
 			ch.position(position + size);
 			return stco;
 /*		case Mdat:
-			Mdat mdat = new Mdat(size, position);
+			Mdat mdat = new Mdat(position, size);
 			// mdatの位置を考えることでmoovが後ろにあるmp4でも対応できるようになる。(ただし処理がおそくなる)
 			ch.position(position + size);
 			return mdat;*/
 		}
 		ch.position(position + size);
-		return new Atom(tag, size, position) {
+		return new Atom(tag, position, size) {
 			@Override
 			public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
 					throws Exception {
@@ -306,7 +306,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 			int size = buffer.getInt();
 			String tag = BufferUtil.getDwordText(buffer);
 			if("vdeo".equals(tag)) {
-				Vdeo vdeo = new Vdeo(size, position);
+				Vdeo vdeo = new Vdeo(position, size);
 				vdeo.analyze(tmp);
 				// 読み込み可能データ量を調べる
 				vdeo.getStco().start(tmp, false); // dataPos
@@ -336,7 +336,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 				tmp.position(position + size);
 			}
 			else if("sond".equals(tag)) {
-				Sond sond = new Sond(size, position);
+				Sond sond = new Sond(position, size);
 				sond.analyze(tmp);
 				sond.getStco().start(tmp, false); // dataPos
 				sond.getStsc().start(tmp, false); // samples in chunk

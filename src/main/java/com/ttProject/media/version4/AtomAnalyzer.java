@@ -34,27 +34,27 @@ public class AtomAnalyzer implements IAtomAnalyzer {
 		Type type = Type.getType(tag);
 		switch(type) {
 		case Moov:
-			Moov moov = new Moov(size, position);
+			Moov moov = new Moov(position, size);
 			moov.analyze(ch, this);
 			ch.position(position + size);
 			return moov;
 		case Iods: // 消す候補
 			// iodsは必要ないと思う。消す。
-			Iods iods = new Iods(size, position);
+			Iods iods = new Iods(position, size);
 			ch.position(position + size);
 			return iods;
 		case Udta: // 消す候補
 			// udtaはいらない。
-			Udta udta = new Udta(size, position);
+			Udta udta = new Udta(position, size);
 			ch.position(position + size);
 			return udta;
 		case Trak:
-			Trak trak = new Trak(size, position);
+			Trak trak = new Trak(position, size);
 			trak.analyze(ch, this);
 			ch.position(position + size);
 			return trak;
 		case Tkhd:
-			Tkhd tkhd = new Tkhd(size, position);
+			Tkhd tkhd = new Tkhd(position, size);
 			tkhd.analyze(ch);
 			ch.position(position + size);
 			if(tkhd.getWidth() != 0 || tkhd.getHeight() != 0) {
@@ -66,29 +66,29 @@ public class AtomAnalyzer implements IAtomAnalyzer {
 		case Mdia:
 		case Minf:
 		case Stbl:
-			ParentAtom parentAtom = new ParentAtom(tag, size, position) {
+			ParentAtom parentAtom = new ParentAtom(tag, position, size) {
 			};
 			parentAtom.analyze(ch, this);
 			ch.position(position + size);
 			return parentAtom;
 		case Stsc:
 			// 各チャンクのサンプル量
-			Stsc stsc = new Stsc(size, position);
+			Stsc stsc = new Stsc(position, size);
 			ch.position(position + size);
 			return stsc;
 		case Stsz:
 			// サンプルのサイズ量
-			Stsz stsz = new Stsz(size, position);
+			Stsz stsz = new Stsz(position, size);
 			ch.position(position + size);
 			return stsz;
 		case Stco:
 			// 各チャンクの開始位置
-			Stco stco = new Stco(size, position);
+			Stco stco = new Stco(position, size);
 			ch.position(position + size);
 			return stco;
 		}
 		ch.position(position + size);
-		return new Atom(tag, size, position) {
+		return new Atom(tag, position, size) {
 			@Override
 			public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
 					throws Exception {

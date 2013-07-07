@@ -146,12 +146,13 @@ public class ContentsManager4 implements IContentsManager {
 				else {
 					// stscとstszを読み込む必要があるが、すでにatomのコピーがおわっているならそっちから読んだ方がよさそう。
 					if(atom instanceof Stsc) {
-						stsc = new Stsc(atom.getSize(), (int)hdr.position());
+						stsc = new Stsc((int)hdr.position(), atom.getSize());
 					}
 					else if(atom instanceof Stsz) {
-						stsz = new Stsz(atom.getSize(), (int)hdr.position());
+						stsz = new Stsz((int)hdr.position(), atom.getSize());
 					}
-					atom.copy(source, hdr);
+					source.position(atom.getPosition());
+					BufferUtil.quickCopy(source, hdr, atom.getSize());
 				}
 			}
 			// stcoまでおわっているはず。

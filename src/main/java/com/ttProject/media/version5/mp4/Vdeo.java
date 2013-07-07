@@ -45,8 +45,8 @@ public class Vdeo extends Atom implements IIndexAtom {
 	 * @param size
 	 * @param position
 	 */
-	public Vdeo(int size, int position) {
-		super(Vdeo.class.getSimpleName().toLowerCase(), size, position);
+	public Vdeo(int position, int size) {
+		super(Vdeo.class.getSimpleName().toLowerCase(), position, size);
 		this.size = size;
 	}
 	public void setSize(int size) {
@@ -110,22 +110,22 @@ public class Vdeo extends Atom implements IIndexAtom {
 			int size = buffer.getInt();
 			String tag = BufferUtil.getDwordText(buffer);
 			if("msh ".equals(tag)) {
-				msh = new Msh(size, position);
+				msh = new Msh(position, size);
 			}
 			else if("stco".equals(tag)) {
-				stco = new Stco(size, position);
+				stco = new Stco(position, size);
 			}
 			else if("stsc".equals(tag)) {
-				stsc = new Stsc(size, position);
+				stsc = new Stsc(position, size);
 			}
 			else if("stsz".equals(tag)) {
-				stsz = new Stsz(size, position);
+				stsz = new Stsz(position, size);
 			}
 			else if("stts".equals(tag)) {
-				stts = new Stts(size, position);
+				stts = new Stts(position, size);
 			}
 			else if("stss".equals(tag)) {
-				stss = new Stss(size, position);
+				stss = new Stss(position, size);
 			}
 			else {
 				throw new Exception("解析不能なタグを発見:" + tag);

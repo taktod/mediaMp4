@@ -53,11 +53,6 @@
       <version>0.0.2-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>com.ttProject</groupId>
-      <artifactId>myLib.mp4</artifactId>
-      <version>0.0.2-SNAPSHOT</version>
-    </dependency>
-    <dependency>
       <groupId>ehcache</groupId>
       <artifactId>ehcache</artifactId>
       <version>1.2.3</version>
@@ -65,6 +60,11 @@
     <dependency>
       <groupId>com.ttProject</groupId>
       <artifactId>myLib.media.flv</artifactId>
+      <version>0.0.2-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.ttProject</groupId>
+      <artifactId>myLib.media.mp4</artifactId>
       <version>0.0.2-SNAPSHOT</version>
     </dependency>
   </dependencies>

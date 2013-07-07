@@ -47,8 +47,8 @@ public class Sond extends Atom implements IIndexAtom {
 	 * @param size
 	 * @param position
 	 */
-	public Sond(int size, int position) {
-		super(Sond.class.getSimpleName().toLowerCase(), size, position);
+	public Sond(int position, int size) {
+		super(Sond.class.getSimpleName().toLowerCase(), position, size);
 		this.size = size;
 	}
 	public void setSize(int size) {
@@ -116,19 +116,19 @@ public class Sond extends Atom implements IIndexAtom {
 			int size = buffer.getInt();
 			String tag = BufferUtil.getDwordText(buffer);
 			if("msh ".equals(tag)) {
-				msh = new Msh(size, position);
+				msh = new Msh(position, size);
 			}
 			else if("stco".equals(tag)) {
-				stco = new Stco(size, position);
+				stco = new Stco(position, size);
 			}
 			else if("stsc".equals(tag)) {
-				stsc = new Stsc(size, position);
+				stsc = new Stsc(position, size);
 			}
 			else if("stsz".equals(tag)) {
-				stsz = new Stsz(size, position);
+				stsz = new Stsz(position, size);
 			}
 			else if("stts".equals(tag)) {
-				stts = new Stts(size, position);
+				stts = new Stts(position, size);
 			}
 			else {
 				throw new Exception("解析不能なタグを発見:" + tag);
