@@ -13,7 +13,7 @@ import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.atom.Moov;
 import com.ttProject.media.version.IContentsManager;
 import com.ttProject.nio.channels.FileReadChannel;
-import com.ttProject.nio.channels.IFileReadChannel;
+import com.ttProject.nio.channels.IReadChannel;
 import com.ttProject.util.TmpFile;
 
 public class ContentsManager5 implements IContentsManager {
@@ -33,7 +33,7 @@ public class ContentsManager5 implements IContentsManager {
 	}
 	@Override
 	public void analyze() throws Exception {
-		IFileReadChannel source = FileReadChannel.openFileReadChannel(uri);
+		IReadChannel source = FileReadChannel.openFileReadChannel(uri);
 		IndexFileCreator analyzer = new IndexFileCreator(idxFile);
 		Atom atom = null;
 		while((atom = analyzer.analyze(source)) != null) {
@@ -54,7 +54,7 @@ public class ContentsManager5 implements IContentsManager {
 			startPos = "0";
 		}
 		System.out.println(startPos);
-		IFileReadChannel source = null, tmp = null;
+		IReadChannel source = null, tmp = null;
 		int responseSize = 0;
 		try {
 			final WritableByteChannel target = Channels.newChannel(response.getOutputStream());

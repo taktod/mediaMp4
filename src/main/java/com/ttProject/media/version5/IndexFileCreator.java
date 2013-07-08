@@ -33,7 +33,7 @@ import com.ttProject.media.version5.mp4.Meta;
 import com.ttProject.media.version5.mp4.Sond;
 import com.ttProject.media.version5.mp4.Vdeo;
 import com.ttProject.nio.channels.FileReadChannel;
-import com.ttProject.nio.channels.IFileReadChannel;
+import com.ttProject.nio.channels.IReadChannel;
 import com.ttProject.util.BufferUtil;
 
 /**
@@ -66,7 +66,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 		idx = new FileOutputStream(targetFile).getChannel();
 	}
 	@Override
-	public Atom analyze(IFileReadChannel ch) throws Exception {
+	public Atom analyze(IReadChannel ch) throws Exception {
 		if(ch.size() == ch.position()) {
 			return null;
 		}
@@ -270,7 +270,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 		ch.position(position + size);
 		return new Atom(tag, position, size) {
 			@Override
-			public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
+			public void analyze(IReadChannel ch, IAtomAnalyzer analyzer)
 					throws Exception {
 				;
 			}
@@ -299,7 +299,7 @@ public class IndexFileCreator implements IAtomAnalyzer {
 	 * 各要素の有用データ量を確認しておく
 	 */
 	public void checkDataSize() throws Exception {
-		IFileReadChannel tmp = FileReadChannel.openFileReadChannel(targetFile.getAbsolutePath());
+		IReadChannel tmp = FileReadChannel.openFileReadChannel(targetFile.getAbsolutePath());
 		while(tmp.position() < tmp.size()) {
 			int position = tmp.position();
 			ByteBuffer buffer = BufferUtil.safeRead(tmp, 8);

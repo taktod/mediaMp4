@@ -14,7 +14,7 @@ import com.ttProject.media.mp4.atom.Stsz;
 import com.ttProject.media.mp4.atom.Tkhd;
 import com.ttProject.media.mp4.atom.Trak;
 import com.ttProject.media.mp4.atom.Udta;
-import com.ttProject.nio.channels.IFileReadChannel;
+import com.ttProject.nio.channels.IReadChannel;
 import com.ttProject.util.BufferUtil;
 
 /**
@@ -22,7 +22,7 @@ import com.ttProject.util.BufferUtil;
  * @author taktod
  */
 public class AtomAnalyzer implements IAtomAnalyzer {
-	public Atom analyze(IFileReadChannel ch) throws Exception {
+	public Atom analyze(IReadChannel ch) throws Exception {
 		// 最後まで解析が済んだ場合はおわっておく。
 		if(ch.size() == ch.position()) {
 			return null;
@@ -90,7 +90,7 @@ public class AtomAnalyzer implements IAtomAnalyzer {
 		ch.position(position + size);
 		return new Atom(tag, position, size) {
 			@Override
-			public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
+			public void analyze(IReadChannel ch, IAtomAnalyzer analyzer)
 					throws Exception {
 				;
 			}

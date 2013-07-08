@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.ttProject.util.BufferUtil;
 import com.ttProject.media.version.IContentsManager;
 import com.ttProject.nio.channels.FileReadChannel;
-import com.ttProject.nio.channels.IFileReadChannel;
+import com.ttProject.nio.channels.IReadChannel;
 
 /**
  * コンテンツマネージャー
@@ -44,7 +44,7 @@ public class ContentsManager2 implements IContentsManager {
 	 */
 	public void accessMediaData(HttpServletRequest request,
 			HttpServletResponse response) throws Exception {
-		IFileReadChannel channel = null;
+		IReadChannel channel = null;
 		try {
 			channel = FileReadChannel.openFileReadChannel(uri);
 			replyHeader(channel, request, response);
@@ -71,7 +71,7 @@ public class ContentsManager2 implements IContentsManager {
 	 * @param response
 	 * @throws Exception
 	 */
-	public void replyHeader(IFileReadChannel channel, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public void replyHeader(IReadChannel channel, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		String range = request.getHeader("Range");
 		if(range == null) {
 			// 全データを読み込む場合
@@ -113,7 +113,7 @@ public class ContentsManager2 implements IContentsManager {
 	 * @param response
 	 * @throws Exception
 	 */
-	public void replyBody(IFileReadChannel channel, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public void replyBody(IReadChannel channel, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		WritableByteChannel target = null;
 		channel.position(start);
 		try {

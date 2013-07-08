@@ -12,7 +12,7 @@ import com.ttProject.media.mp4.atom.Stsc;
 import com.ttProject.media.mp4.atom.Stss;
 import com.ttProject.media.mp4.atom.Stsz;
 import com.ttProject.media.mp4.atom.Stts;
-import com.ttProject.nio.channels.IFileReadChannel;
+import com.ttProject.nio.channels.IReadChannel;
 import com.ttProject.util.BufferUtil;
 
 /**
@@ -95,7 +95,7 @@ public class Vdeo extends Atom implements IIndexAtom {
 		return stss;
 	}
 	@Override
-	public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
+	public void analyze(IReadChannel ch, IAtomAnalyzer analyzer)
 			throws Exception {
 		ch.position(getPosition() + 8);
 		ByteBuffer buffer = BufferUtil.safeRead(ch, 16);
@@ -151,7 +151,7 @@ public class Vdeo extends Atom implements IIndexAtom {
 	 * @return
 	 * @throws Exception
 	 */
-	public VideoTag createFlvMshTag(IFileReadChannel tmp) throws Exception {
+	public VideoTag createFlvMshTag(IReadChannel tmp) throws Exception {
 		if(msh == null) {
 			return null;
 		}

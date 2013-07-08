@@ -19,7 +19,7 @@ import com.ttProject.media.mp4.atom.Tkhd;
 import com.ttProject.media.mp4.atom.Trak;
 import com.ttProject.media.version.IContentsManager;
 import com.ttProject.nio.channels.FileReadChannel;
-import com.ttProject.nio.channels.IFileReadChannel;
+import com.ttProject.nio.channels.IReadChannel;
 
 /**
  * コンテンツマネージャー
@@ -48,7 +48,7 @@ public class ContentsManager3 implements IAtomAnalyzer, IContentsManager {
 	 * ターゲットの解析する
 	 */
 	public void analyze() throws Exception {
-		IFileReadChannel channel = FileReadChannel.openFileReadChannel(uri);
+		IReadChannel channel = FileReadChannel.openFileReadChannel(uri);
 		// データを解析しておきます。
 		while(analyze(channel) != null) {
 			;
@@ -61,7 +61,7 @@ public class ContentsManager3 implements IAtomAnalyzer, IContentsManager {
 	 */
 	public void accessMediaData(HttpServletRequest request,
 			HttpServletResponse response) throws Exception {
-		IFileReadChannel channel = null;
+		IReadChannel channel = null;
 		try {
 			channel = FileReadChannel.openFileReadChannel(uri);
 			replyHeader(channel, request, response);
@@ -84,7 +84,7 @@ public class ContentsManager3 implements IAtomAnalyzer, IContentsManager {
 	/**
 	 * 解析
 	 */
-	public Atom analyze(IFileReadChannel ch) throws Exception {
+	public Atom analyze(IReadChannel ch) throws Exception {
 		if(ch.size() == ch.position()) {
 			return null;
 		}
@@ -120,7 +120,7 @@ public class ContentsManager3 implements IAtomAnalyzer, IContentsManager {
 		// 適当なクラスをつくっておく。
 		Atom atom = new Atom(tag, position, size) {
 			@Override
-			public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
+			public void analyze(IReadChannel ch, IAtomAnalyzer analyzer)
 					throws Exception {
 			}
 		};
@@ -134,7 +134,7 @@ public class ContentsManager3 implements IAtomAnalyzer, IContentsManager {
 	 * @param response
 	 * @throws Exception
 	 */
-	public void replyHeader(IFileReadChannel channel, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public void replyHeader(IReadChannel channel, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		String range = request.getHeader("Range");
 		if(range == null) {
 			// 全データを読み込む場合
@@ -176,7 +176,7 @@ public class ContentsManager3 implements IAtomAnalyzer, IContentsManager {
 	 * @param response
 	 * @throws Exception
 	 */
-	public void replyBody(IFileReadChannel channel, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public void replyBody(IReadChannel channel, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		WritableByteChannel target = null;
 		channel.position(start);
 		try {

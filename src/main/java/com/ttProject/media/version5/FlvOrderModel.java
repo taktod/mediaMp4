@@ -15,7 +15,7 @@ import com.ttProject.media.flv.tag.VideoTag;
 import com.ttProject.media.version5.mp4.Meta;
 import com.ttProject.media.version5.mp4.Sond;
 import com.ttProject.media.version5.mp4.Vdeo;
-import com.ttProject.nio.channels.IFileReadChannel;
+import com.ttProject.nio.channels.IReadChannel;
 import com.ttProject.util.BufferUtil;
 
 /**
@@ -44,7 +44,7 @@ public class FlvOrderModel {
 	/**
 	 * コンストラクタ
 	 */
-	public FlvOrderModel(IFileReadChannel idxFile, boolean videoFlg, boolean soundFlg, int startMilliSecond) throws Exception {
+	public FlvOrderModel(IReadChannel idxFile, boolean videoFlg, boolean soundFlg, int startMilliSecond) throws Exception {
 		this.startMilliSeconds = startMilliSecond;
 		initialize(idxFile, videoFlg, soundFlg);
 	}
@@ -83,7 +83,7 @@ public class FlvOrderModel {
 	/**
 	 * 開始準備をしておく。
 	 */
-	private void initialize(IFileReadChannel tmp, boolean videoFlg, boolean soundFlg) throws Exception {
+	private void initialize(IReadChannel tmp, boolean videoFlg, boolean soundFlg) throws Exception {
 		while(tmp.position() < tmp.size()) {
 			int position = tmp.position();
 			ByteBuffer buffer = BufferUtil.safeRead(tmp, 8);
@@ -144,7 +144,7 @@ public class FlvOrderModel {
 	 * もうデータがない場合はnullまだある場合はlistを返します。
 	 * @return
 	 */
-	public List<Tag> nextTagList(IFileReadChannel source) throws Exception {
+	public List<Tag> nextTagList(IReadChannel source) throws Exception {
 		// データを解析する。
 			// 映像のstcoと音声のstcoを比較して前にある方の処理をすすめる。
 		if(vdeo != null && (sond == null || vdeo.getStco().getChunkPos() < sond.getStco().getChunkPos())) {
@@ -247,7 +247,7 @@ public class FlvOrderModel {
 	private long vTimePos = 0;
 	private long sTimePos = 0;
 	private int vSampleCount = 0;
-	private void analyzeVdeo(IFileReadChannel source) throws Exception {
+	private void analyzeVdeo(IReadChannel source) throws Exception {
 		int sourcePos = vdeo.getStco().getChunkPos();
 		vdeo.getStsc().nextChunk();
 		int chunkSampleCount = vdeo.getStsc().getSampleCount();
@@ -295,7 +295,7 @@ public class FlvOrderModel {
 			vdeo.getStco().nextChunkPos();
 		}
 	}
-	private void analyzeSond(IFileReadChannel source) throws Exception {
+	private void analyzeSond(IReadChannel source) throws Exception {
 		int sourcePos = sond.getStco().getChunkPos();
 		sond.getStsc().nextChunk();
 		int chunkSampleCount = sond.getStsc().getSampleCount();

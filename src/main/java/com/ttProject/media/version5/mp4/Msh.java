@@ -2,7 +2,7 @@ package com.ttProject.media.version5.mp4;
 
 import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.IAtomAnalyzer;
-import com.ttProject.nio.channels.IFileReadChannel;
+import com.ttProject.nio.channels.IReadChannel;
 
 /**
  * mediaSequenceHeader用のatom
@@ -21,7 +21,7 @@ public class Msh extends Atom {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
+	public void analyze(IReadChannel ch, IAtomAnalyzer analyzer)
 		throws Exception {
 	}
 }

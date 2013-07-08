@@ -11,7 +11,7 @@ import com.ttProject.media.mp4.atom.Stco;
 import com.ttProject.media.mp4.atom.Stsc;
 import com.ttProject.media.mp4.atom.Stsz;
 import com.ttProject.media.mp4.atom.Stts;
-import com.ttProject.nio.channels.IFileReadChannel;
+import com.ttProject.nio.channels.IReadChannel;
 import com.ttProject.util.BufferUtil;
 
 /**
@@ -99,7 +99,7 @@ public class Sond extends Atom implements IIndexAtom {
 		return stts;
 	}
 	@Override
-	public void analyze(IFileReadChannel ch, IAtomAnalyzer analyzer)
+	public void analyze(IReadChannel ch, IAtomAnalyzer analyzer)
 			throws Exception {
 		ch.position(getPosition() + 8);
 		ByteBuffer buffer = BufferUtil.safeRead(ch, 21);
@@ -156,7 +156,7 @@ public class Sond extends Atom implements IIndexAtom {
 	 * @return
 	 * @throws Exception
 	 */
-	public AudioTag createFlvMshTag(IFileReadChannel tmp) throws Exception {
+	public AudioTag createFlvMshTag(IReadChannel tmp) throws Exception {
 		if(msh == null) { // mediaSequenceHeaderが解析されていない場合は応答しない。
 			return null;
 		}

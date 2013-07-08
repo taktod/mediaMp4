@@ -27,7 +27,7 @@ import com.ttProject.media.mp4.atom.Trak;
 import com.ttProject.media.mp4.atom.Udta;
 import com.ttProject.media.version.IContentsManager;
 import com.ttProject.nio.channels.FileReadChannel;
-import com.ttProject.nio.channels.IFileReadChannel;
+import com.ttProject.nio.channels.IReadChannel;
 import com.ttProject.util.BufferUtil;
 import com.ttProject.util.ChannelUtil;
 import com.ttProject.util.TmpFile;
@@ -55,7 +55,7 @@ public class ContentsManager4 implements IContentsManager {
 	private File idxFile;
 
 	// 解析補助
-	private IFileReadChannel source = null;
+	private IReadChannel source = null;
 	private Stsc stsc = null;
 	private Stsz stsz = null;
 	private Stco stco = null;
@@ -215,7 +215,7 @@ public class ContentsManager4 implements IContentsManager {
 	 * @return
 	 * @throws Exception
 	 */
-	private Moov findMoov(IFileReadChannel source) throws Exception {
+	private Moov findMoov(IReadChannel source) throws Exception {
 		IAtomAnalyzer analyzer = new AtomAnalyzer();
 		Atom atom = null;
 		while((atom = analyzer.analyze(source)) != null) {
@@ -292,8 +292,8 @@ public class ContentsManager4 implements IContentsManager {
 				throw new Exception("timeout");
 			}
 		}
-		IFileReadChannel idxChannel = null;
-		IFileReadChannel hdrChannel = null;
+		IReadChannel idxChannel = null;
+		IReadChannel hdrChannel = null;
 		WritableByteChannel channel = null;
 		// 等々レスポンスの部分をつくっていきます。
 		try {
@@ -323,8 +323,8 @@ public class ContentsManager4 implements IContentsManager {
 	 */
 	private void responseData(HttpServletRequest request,
 			HttpServletResponse response,
-			IFileReadChannel idxChannel,
-			IFileReadChannel hdrChannel,
+			IReadChannel idxChannel,
+			IReadChannel hdrChannel,
 			WritableByteChannel channel,
 			int start, int end, long startTime) throws Exception {
 		boolean responseStart= false;
@@ -367,7 +367,7 @@ public class ContentsManager4 implements IContentsManager {
 				break;
 			}
 		}
-		IFileReadChannel source = null;
+		IReadChannel source = null;
 		try {
 			// オリジナルファイル上の開始位置をしっておく必要がある
 			source = FileReadChannel.openFileReadChannel(uri, start - newStart + originalStart);
@@ -419,8 +419,8 @@ public class ContentsManager4 implements IContentsManager {
 	 */
 	private void responseHeader(HttpServletRequest request,
 			HttpServletResponse response,
-			IFileReadChannel idxChannel,
-			IFileReadChannel hdrChannel,
+			IReadChannel idxChannel,
+			IReadChannel hdrChannel,
 			WritableByteChannel channel, long startTime) throws Exception {
 		// まず応答ヘッダをつくる。
 		String range = request.getHeader("Range");

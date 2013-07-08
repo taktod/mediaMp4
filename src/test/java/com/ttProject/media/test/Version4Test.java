@@ -28,7 +28,7 @@ import com.ttProject.media.mp4.atom.Trak;
 import com.ttProject.media.mp4.atom.Udta;
 import com.ttProject.media.version4.AtomAnalyzer;
 import com.ttProject.nio.channels.FileReadChannel;
-import com.ttProject.nio.channels.IFileReadChannel;
+import com.ttProject.nio.channels.IReadChannel;
 import com.ttProject.util.BufferUtil;
 
 @SuppressWarnings("unused")
@@ -85,7 +85,7 @@ public class Version4Test {
 		// 前の出力があったら邪魔なので削除する。
 		new File(output).delete();
 		// 読み込みターゲットを開く
-		IFileReadChannel fc = FileReadChannel.openFileReadChannel(target);
+		IReadChannel fc = FileReadChannel.openFileReadChannel(target);
 
 		// 解析処理
 		IAtomAnalyzer analyzer = new AtomAnalyzer();
@@ -117,7 +117,7 @@ public class Version4Test {
 		fc.close();
 		System.out.println("おわり");
 	}
-	private void makeBody(IFileReadChannel fc, FileChannel target,
+	private void makeBody(IReadChannel fc, FileChannel target,
 			int chunkTotal) throws IOException, Exception {
 		ByteBuffer buffer;
 		// 読み込みデータ量をしっておく。
@@ -128,7 +128,7 @@ public class Version4Test {
 		target.write(buffer);
 
 		// mdatの内容を書いておきたい。
-		IFileReadChannel index = FileReadChannel.openFileReadChannel(tmp);
+		IReadChannel index = FileReadChannel.openFileReadChannel(tmp);
 		index.position(8);
 		while(true) {
 			if(index.size() == index.position()) {
@@ -141,7 +141,7 @@ public class Version4Test {
 		}
 		index.close();
 	}
-	private int makeHdr(IFileReadChannel fc, List<Atom> list, int size,
+	private int makeHdr(IReadChannel fc, List<Atom> list, int size,
 			FileChannel target) throws IOException,
 			Exception {
 		FileChannel idx = new FileOutputStream(tmp).getChannel();
@@ -197,8 +197,8 @@ public class Version4Test {
 
 		// この動作はちょっと危険
 		pos = size + ftyp.length + 8; // データの開始位置をいれておく。
-		IFileReadChannel stscReader = FileReadChannel.openFileReadChannel(this.target);
-		IFileReadChannel stszReader = FileReadChannel.openFileReadChannel(this.target);
+		IReadChannel stscReader = FileReadChannel.openFileReadChannel(this.target);
+		IReadChannel stszReader = FileReadChannel.openFileReadChannel(this.target);
 		stscReader.position(stsc.getPosition() + 12);
 		int stscCount = BufferUtil.safeRead(stscReader, 4).getInt();
 		stszReader.position(stsz.getPosition() + 12);

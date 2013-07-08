@@ -14,7 +14,7 @@ import com.ttProject.media.version5.FlvOrderModel;
 import com.ttProject.media.version5.IFlvStartEventListener;
 import com.ttProject.media.version5.IndexFileCreator;
 import com.ttProject.nio.channels.FileReadChannel;
-import com.ttProject.nio.channels.IFileReadChannel;
+import com.ttProject.nio.channels.IReadChannel;
 
 /**
  * version5 flv変換のテスト
@@ -44,7 +44,7 @@ import com.ttProject.nio.channels.IFileReadChannel;
 public class Version5Test {
 	@Test
 	public void analyzeTest() throws Exception {
-		IFileReadChannel fc = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.mp4");
+		IReadChannel fc = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.mp4");
 		IndexFileCreator analyzer = new IndexFileCreator(new File("output.tmp"));
 		Atom atom = null;
 		while((atom = analyzer.analyze(fc)) != null) {
@@ -55,7 +55,7 @@ public class Version5Test {
 		analyzer.updatePrevTag();
 		analyzer.checkDataSize();
 		analyzer.close();
-		IFileReadChannel tmp = FileReadChannel.openFileReadChannel(new File("output.tmp").getAbsolutePath());
+		IReadChannel tmp = FileReadChannel.openFileReadChannel(new File("output.tmp").getAbsolutePath());
 		// ここで開始位置、video要素、audio要素等の指定が可能になります。
 		FlvOrderModel orderModel = new FlvOrderModel(tmp, true, true, 6000);
 		orderModel.addStartEvent(new IFlvStartEventListener() {
