@@ -32,53 +32,35 @@ public class PesTest {
 	public void test() throws Exception {
 		FileChannel output = null;
 		IReadChannel target = null;
+		ByteBuffer buffer;
+		int left;
 		try {
 			output = new FileOutputStream("output.ts").getChannel();
 			target = FileReadChannel.openFileReadChannel(
-					Thread.currentThread().getContextClassLoader().getResource("mario.aac")
+					Thread.currentThread().getContextClassLoader().getResource("smile.aac")
 			);
 			// とりあえずファイルにして再生できるかで判定したいので、つくってみることにする。
+			// sdt
 			Sdt sdt = new Sdt();
-			sdt.writeDefaultProvider("taktodTools", "mepgtsMuxer");
-			ByteBuffer buffer = sdt.getBuffer();
-			int left = 188 - buffer.remaining();
-			output.write(buffer);
-			buffer = ByteBuffer.allocate(left);
-			for(int i = 0;i < left;i ++) {
-				buffer.put((byte)0xFF);
-			}
-			buffer.flip();
-			output.write(buffer);
-			// つづいてpat
+			sdt.writeDefaultProvider("taktodTools", "mpegtsMuxer");
+			output.write(sdt.getBuffer());
+
+			// pat
 			Pat pat = new Pat();
-			buffer = pat.getBuffer();
-			left = 188 - buffer.remaining();
-			output.write(buffer);
-			buffer = ByteBuffer.allocate(left);
-			for(int i = 0;i < left;i ++) {
-				buffer.put((byte)0xFF);
-			}
-			buffer.flip();
-			output.write(buffer);
-			// つづいてPMT
+			output.write(pat.getBuffer());
+			
+			// pmt
 			Pmt pmt = new Pmt();
 			pmt.addNewField(PmtElementaryField.makeNewField(CodecType.AUDIO_AAC));
-			buffer = pmt.getBuffer();
-			left = 188 - buffer.remaining();
-			output.write(buffer);
-			buffer = ByteBuffer.allocate(left);
-			for(int i = 0;i < left;i ++) {
-				buffer.put((byte)0xFF);
-			}
-			buffer.flip();
-			output.write(buffer);
+			output.write(pmt.getBuffer());
 
+			// ここからpesをつくっていく
 			int counter = 0;
 			int j = 0;
 			while(true) {
 				j ++;
 				// pesをつくる。
-				// これからpesに含めるデータを取り出す
+				// これからpesに含めるデータを取り出す(複数のpesに渡るデータで問題ない)
 				List<Frame> frames = new ArrayList<Frame>();
 				IFrameAnalyzer analyzer = new FrameAnalyzer();
 				int dataSize = 0;
@@ -91,11 +73,11 @@ public class PesTest {
 					// 現在のカウンター / 44.1fが再生時刻
 					frames.add(frame);
 					dataSize += frame.getSize();
-//					System.out.println(frame);
-					if(counter / 44.1f > 1 * (j + 1)) {
+					if(counter / 44.1f > 1 * j) {
 						break;
 					}
 				}
+				System.out.println(counter);
 				if(findFrame == 0) {
 					// もうデータがない
 					break;
@@ -105,6 +87,8 @@ public class PesTest {
 					buffer.put(f.getBuffer());
 				}
 				buffer.flip();
+				// TODO adaptationFieldが別にある状態でデータが足りなくなった場合、adaptationFieldをうまく操作する必要がある。
+				// とりあえず対処できないので、データをすてておく。
 				if(buffer.remaining() < 184) {
 					// データが足りない場合はあきらめる。
 					// 本来だったらadaptationFieldでうめてつじつまを合わせるべきだと思う。
@@ -112,15 +96,14 @@ public class PesTest {
 				}
 				// データ準備おわり
 				// pesの情報をつくりだす。
-				Pes pes = new Pes(CodecType.AUDIO_AAC, true, (short)0x0100);
+				Pes pes = new Pes(CodecType.AUDIO_AAC, true, (short)0x0100, buffer, (long)(90000 * counter / 44.1f));
 				// とりあえずadaptationFieldのpcrBaseにデータをいれたい。(初データなので、とりあえず放置でよい。)
-//				System.out.println(90000 * counter / 44.1f + 90000);
-				pes.getAdaptationField().setPcrBase((long)(90000 * counter / 44.1f));
+//				pes.getAdaptationField().setPcrBase((long)(90000 * counter / 44.1f));
 				// つづいてPesPacketLengthを書き込む dataSizeのこと
-				pes.setPesPacketLength((short)dataSize);
+//				pes.setPesPacketLength((short)dataSize);
 				// ptsDtsIndicatorは10を指定してptsのみ記述予定
 				PtsField pts = new PtsField();
-				pts.setPts((long)(90000 * counter / 44.1f + 45000));
+				pts.setPts((long)(90000 * counter / 44.1f));
 				pes.setPts(pts);
 				// どうやらh.264(映像？)でbframeをつかっている場合に設定する必要があるっぽい。
 				// http://vfrmaniac.fushizen.eu/contents/pts_dts_generation.html
@@ -139,12 +122,13 @@ public class PesTest {
 	
 				while(true) {
 					left = 184;
-					if(left > buffer.remaining()) {
+					if(183 > buffer.remaining()) {
 						buf = pes.getSubHeaderBuffer(true);
 						output.write(buf);
 						System.out.println("データが減ってます。:" + buffer.remaining());
 						// adaptationFieldで埋めるデータ量をきめる。
 						left = 183 - buffer.remaining(); // このサイズ分だけ、0xffでうめる必要あり。
+						System.out.println(left + 1);
 						buf = ByteBuffer.allocate(left + 1);
 						buf.put((byte)left);
 						buf.put((byte)0);
@@ -156,13 +140,28 @@ public class PesTest {
 						output.write(buffer);
 						break;
 					}
+					else if(183 == buffer.remaining()){
+						buf = pes.getSubHeaderBuffer(true);
+						output.write(buf);
+						System.out.println("データが減ってます。:" + buffer.remaining());
+						// adaptationFieldで埋めるデータ量をきめる。
+						left = 2; // このサイズ分だけ、0xffでうめる必要あり。
+						buf = ByteBuffer.allocate(2);
+						buf.put((byte)1);
+						buf.put((byte)0);
+						buf.flip();
+						output.write(buf);
+						// bufferの部分からは、182バイト分だけコピーしてもよい。
+						b= new byte[182];
+						buffer.get(b);
+						output.write(ByteBuffer.wrap(b));
+					}
 					else {
 						buf = pes.getSubHeaderBuffer(false);
 						output.write(buf);
 						b = new byte[left];
 						buffer.get(b);
-						buf = ByteBuffer.wrap(b);
-						output.write(buf);
+						output.write(ByteBuffer.wrap(b));
 					}
 				}
 			}
