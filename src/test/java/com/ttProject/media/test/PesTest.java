@@ -11,9 +11,9 @@ import org.junit.Test;
 import com.ttProject.media.aac.Frame;
 import com.ttProject.media.aac.FrameAnalyzer;
 import com.ttProject.media.aac.IFrameAnalyzer;
+import com.ttProject.media.aac.frame.Aac;
 import com.ttProject.media.mpegts.CodecType;
 import com.ttProject.media.mpegts.field.PmtElementaryField;
-import com.ttProject.media.mpegts.field.PtsField;
 import com.ttProject.media.mpegts.packet.Pat;
 import com.ttProject.media.mpegts.packet.Pes;
 import com.ttProject.media.mpegts.packet.Pmt;
@@ -30,14 +30,16 @@ import com.ttProject.nio.channels.IReadChannel;
 public class PesTest {
 	@Test
 	public void test() throws Exception {
+		// 書き込み対象
 		FileChannel output = null;
+		// 読み込み対象
 		IReadChannel target = null;
-		ByteBuffer buffer;
-		int left;
 		try {
-			output = new FileOutputStream("output.ts").getChannel();
+			// 書き込み対象
+			output = new FileOutputStream("output2.ts").getChannel();
+			// 読み込み対象とりあえずadtsのaacにしておく。
 			target = FileReadChannel.openFileReadChannel(
-					Thread.currentThread().getContextClassLoader().getResource("smile.aac")
+					Thread.currentThread().getContextClassLoader().getResource("mario.aac")
 			);
 			// とりあえずファイルにして再生できるかで判定したいので、つくってみることにする。
 			// sdt
@@ -55,114 +57,61 @@ public class PesTest {
 			output.write(pmt.getBuffer());
 
 			// ここからpesをつくっていく
-			int counter = 0;
+			int totalFrame = 0;
 			int j = 0;
 			while(true) {
+				// 本当は適当なタイミングでpatとpmtを再度代入すべき
 				j ++;
 				// pesをつくる。
 				// これからpesに含めるデータを取り出す(複数のpesに渡るデータで問題ない)
+				// aacの解析
 				List<Frame> frames = new ArrayList<Frame>();
 				IFrameAnalyzer analyzer = new FrameAnalyzer();
+				// 読み込むべきデータサイズ
 				int dataSize = 0;
-				Frame frame = null;
+				// 内包するフレーム数
 				int findFrame = 0;
+				// 処理フレーム
+				Frame frame = null;
+				float samplingRate = -1;
 				while((frame = analyzer.analyze(target)) != null) {
-					findFrame ++;
 					// みつけたフレーム
-					counter ++;
-					// 現在のカウンター / 44.1fが再生時刻
+					findFrame ++;
+					totalFrame ++;
+					// フレーム保持
 					frames.add(frame);
+					if(samplingRate == -1 && frame instanceof Aac) {
+						samplingRate = ((Aac)frame).getSamplingRate();
+					}
+					// データ量を計算しておく
 					dataSize += frame.getSize();
-					if(counter / 44.1f > 1 * j) {
+					// 現在のカウンター / 44.1fが再生時刻(1秒ごとに切っておく)
+					if(samplingRate != -1 && 1.024 * totalFrame / samplingRate > 1 * j) {
 						break;
 					}
 				}
-				System.out.println(counter);
+				// 今回みつけた追記フレームがない場合はもうデータがない
 				if(findFrame == 0) {
+					System.out.println("データがなくなった");
 					// もうデータがない
 					break;
 				}
-				buffer = ByteBuffer.allocate(dataSize);
+				// フレームデータをbuffer化する。
+				ByteBuffer buffer = ByteBuffer.allocate(dataSize);
 				for(Frame f : frames) {
 					buffer.put(f.getBuffer());
 				}
 				buffer.flip();
-				// TODO adaptationFieldが別にある状態でデータが足りなくなった場合、adaptationFieldをうまく操作する必要がある。
-				// とりあえず対処できないので、データをすてておく。
-				if(buffer.remaining() < 184) {
-					// データが足りない場合はあきらめる。
-					// 本来だったらadaptationFieldでうめてつじつまを合わせるべきだと思う。
-					break;
-				}
-				// データ準備おわり
-				// pesの情報をつくりだす。
-				Pes pes = new Pes(CodecType.AUDIO_AAC, true, (short)0x0100, buffer, (long)(90000 * counter / 44.1f));
-				// とりあえずadaptationFieldのpcrBaseにデータをいれたい。(初データなので、とりあえず放置でよい。)
-//				pes.getAdaptationField().setPcrBase((long)(90000 * counter / 44.1f));
-				// つづいてPesPacketLengthを書き込む dataSizeのこと
-//				pes.setPesPacketLength((short)dataSize);
-				// ptsDtsIndicatorは10を指定してptsのみ記述予定
-				PtsField pts = new PtsField();
-				pts.setPts((long)(90000 * counter / 44.1f));
-				pes.setPts(pts);
-				// どうやらh.264(映像？)でbframeをつかっている場合に設定する必要があるっぽい。
-				// http://vfrmaniac.fushizen.eu/contents/pts_dts_generation.html
-				// よくわからんので、とりあえずptsのみ書き込んでおく。
-				// なおptsは盛り込んだデータ量でよさそう。
-				// よって今回追加するデータ量は90000となります。(1秒分いれるため。)
-				// PESHeaderLengthは5になります。
-				ByteBuffer buf = pes.getBuffer();
-				// TODO フレームはみつかるけど、始めのパケットのデータを満たすにはデータが足りないということがあるっぽい。うーん。
-				left = 188 - buf.remaining();
-				output.write(buf);
-				byte[] b = new byte[left];
-				buffer.get(b);
-				buf = ByteBuffer.wrap(b);
-				output.write(buf);
-	
-				while(true) {
-					left = 184;
-					if(183 > buffer.remaining()) {
-						buf = pes.getSubHeaderBuffer(true);
-						output.write(buf);
-						System.out.println("データが減ってます。:" + buffer.remaining());
-						// adaptationFieldで埋めるデータ量をきめる。
-						left = 183 - buffer.remaining(); // このサイズ分だけ、0xffでうめる必要あり。
-						System.out.println(left + 1);
-						buf = ByteBuffer.allocate(left + 1);
-						buf.put((byte)left);
-						buf.put((byte)0);
-						for(int i = 0;i < left - 1;i ++) {
-							buf.put((byte)0xFF);
-						}
-						buf.flip();
-						output.write(buf);
-						output.write(buffer);
-						break;
-					}
-					else if(183 == buffer.remaining()){
-						buf = pes.getSubHeaderBuffer(true);
-						output.write(buf);
-						System.out.println("データが減ってます。:" + buffer.remaining());
-						// adaptationFieldで埋めるデータ量をきめる。
-						left = 2; // このサイズ分だけ、0xffでうめる必要あり。
-						buf = ByteBuffer.allocate(2);
-						buf.put((byte)1);
-						buf.put((byte)0);
-						buf.flip();
-						output.write(buf);
-						// bufferの部分からは、182バイト分だけコピーしてもよい。
-						b= new byte[182];
-						buffer.get(b);
-						output.write(ByteBuffer.wrap(b));
-					}
-					else {
-						buf = pes.getSubHeaderBuffer(false);
-						output.write(buf);
-						b = new byte[left];
-						buffer.get(b);
-						output.write(ByteBuffer.wrap(b));
-					}
+				// aacは1フレームあたり1024サンプルあるので、1.024でかけないとだめ
+				// pesを作成(とりあえずptsのみ指定でいく)
+				Pes pes = new Pes(CodecType.AUDIO_AAC, true, (short)0x0100, buffer, (long)(90000L * 1.024 * totalFrame / samplingRate));
+				// adaptationFieldにデータをいれる必要があるので、追記しておく。
+				pes.getAdaptationField().setPcrBase((long)(90000L * 1.024 * totalFrame / samplingRate));
+				// データを取り出す(データがなくなるまでgetBufferで188バイトずつ取得できるようになっている。)
+				ByteBuffer buf = null;
+				while((buf = pes.getBuffer()) != null) {
+					// 取得データを書き込んでいく
+					output.write(buf);
 				}
 			}
 		}
