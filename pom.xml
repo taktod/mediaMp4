@@ -82,6 +82,11 @@
       <artifactId>myLib.media.mp3</artifactId>
       <version>0.0.2-SNAPSHOT</version>
     </dependency>
+    <dependency>
+      <groupId>com.ttProject</groupId>
+      <artifactId>myLib.media.h264</artifactId>
+      <version>0.0.2-SNAPSHOT</version>
+    </dependency>
   </dependencies>
   <build>
     <finalName>mediaMp4</finalName>
