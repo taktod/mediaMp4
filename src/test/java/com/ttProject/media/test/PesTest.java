@@ -39,7 +39,7 @@ public class PesTest {
 			output = new FileOutputStream("output2.ts").getChannel();
 			// 読み込み対象とりあえずadtsのaacにしておく。
 			target = FileReadChannel.openFileReadChannel(
-					Thread.currentThread().getContextClassLoader().getResource("mario.aac")
+					Thread.currentThread().getContextClassLoader().getResource("smile.aac")
 			);
 			// とりあえずファイルにして再生できるかで判定したいので、つくってみることにする。
 			// sdt

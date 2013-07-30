@@ -7,12 +7,12 @@ import java.util.List;
 
 import org.junit.Test;
 
+import com.ttProject.media.extra.flv.FlvOrderModel;
+import com.ttProject.media.extra.flv.IFlvStartEventListener;
+import com.ttProject.media.extra.mp4.IndexFileCreator;
 import com.ttProject.media.flv.Tag;
 import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.atom.Moov;
-import com.ttProject.media.version5.FlvOrderModel;
-import com.ttProject.media.version5.IFlvStartEventListener;
-import com.ttProject.media.version5.IndexFileCreator;
 import com.ttProject.nio.channels.FileReadChannel;
 import com.ttProject.nio.channels.IReadChannel;
 
