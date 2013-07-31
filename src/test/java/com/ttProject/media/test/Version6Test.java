@@ -79,6 +79,7 @@ public class Version6Test {
 		// pmt
 		Pmt pmt = new Pmt();
 		pmt.addNewField(PmtElementaryField.makeNewField(CodecType.VIDEO_H264));
+		pmt.addNewField(PmtElementaryField.makeNewField(CodecType.AUDIO_AAC));
 		output.write(pmt.getBuffer());
 
 		// データ
