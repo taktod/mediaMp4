@@ -1,6 +1,5 @@
 package com.ttProject.media.test;
 
-import java.awt.BufferCapabilities.FlipContents;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
@@ -27,7 +26,6 @@ import com.ttProject.media.h264.frame.SequenceParameterSet;
 import com.ttProject.media.mp4.Atom;
 import com.ttProject.media.mp4.atom.Moov;
 import com.ttProject.media.mpegts.CodecType;
-import com.ttProject.media.mpegts.field.AdaptationField;
 import com.ttProject.media.mpegts.field.PmtElementaryField;
 import com.ttProject.media.mpegts.packet.Pat;
 import com.ttProject.media.mpegts.packet.Pes;
@@ -42,14 +40,17 @@ import com.ttProject.nio.channels.IReadChannel;
  * @author taktod
  * 
  * version5と同じ情報があれば、作成可能だと思われます。
- * とりあえず、aacのみのmpegtsをつくるところからせめて見たい。
+ * とりあえず、応答データがどのようなサイズになるかという情報が必要
+ * あとcounterのincrement情報も一致させておきたいところ・・・
+ * どうするかね・・・
+ * 
  */
 public class Version6Test {
 	@Test
 	public void analyzeTest() throws Exception {
 		SequenceParameterSet sps = null;
 		PictureParameterSet pps = null;
-		int duration = 10000; // 10秒ごとに切除することにする。
+//		int duration = 10000; // 10秒ごとに切除することにする。
 		IReadChannel fc = FileReadChannel.openFileReadChannel("http://49.212.39.17/mario.mp4");
 		IndexFileCreator analyzer = new IndexFileCreator(new File("output2.tmp"));
 		Atom atom = null;
@@ -98,7 +99,8 @@ public class Version6Test {
 				if(tag instanceof AudioTag) { // audioTagの内容は保持しておく。
 					AudioTag audioTag = (AudioTag) tag;
 					if(audioTag.isMediaSequenceHeader()) {
-						dsi = new DecoderSpecificInfo(new ByteReadChannel(audioTag.getRawData()));
+						dsi = new DecoderSpecificInfo();
+						dsi.analyze(new ByteReadChannel(audioTag.getRawData()));
 					}
 					else {
 						if(startAacTimestamp == -1) {
@@ -149,11 +151,11 @@ public class Version6Test {
 								writeData.flip();
 								System.out.println("実データサイズ:" + writeData.remaining());
 								Pes pes = new Pes(CodecType.AUDIO_AAC, false, (short)0x0101, writeData, (90L * startAacTimestamp));
-								pes.setAdaptationFieldExist(1);
-								AdaptationField adaptationField = new AdaptationField();
-								adaptationField.setRandomAccessIndicator(1);
-								adaptationField.setLength(1);
-								pes.setAdaptationField(adaptationField);
+//								pes.setAdaptationFieldExist(1);
+//								AdaptationField adaptationField = new AdaptationField();
+//								adaptationField.setRandomAccessIndicator(1);
+//								adaptationField.setLength(1);
+//								pes.setAdaptationField(adaptationField);
 								ByteBuffer buf = null;
 								while((buf = pes.getBuffer()) != null) {
 									output.write(buf);
