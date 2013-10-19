@@ -2,7 +2,6 @@ package com.ttProject.media.test;
 
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,27 +29,27 @@ public class PesTestForMp3 {
 	@Test
 	public void test() {
 		// 書き込み対象
-		FileChannel output = null;
+		FileOutputStream output = null;
 		// 読み込み対象
 		IReadChannel target = null;
 		try {
-			output = new FileOutputStream("output3.ts").getChannel();
+			output = new FileOutputStream("output3.ts");
 			target = FileReadChannel.openFileReadChannel(
 					Thread.currentThread().getContextClassLoader().getResource("smile.mp3")
 			);
 			// sdt
 			Sdt sdt = new Sdt();
 			sdt.writeDefaultProvider("taktodTools", "mpegtsMuxer");
-			output.write(sdt.getBuffer());
+			output.getChannel().write(sdt.getBuffer());
 
 			// pat
 			Pat pat = new Pat();
-			output.write(pat.getBuffer());
+			output.getChannel().write(pat.getBuffer());
 			
 			// pmt
 			Pmt pmt = new Pmt();
 			pmt.addNewField(PmtElementaryField.makeNewField(CodecType.AUDIO_MPEG1));
-			output.write(pmt.getBuffer());
+			output.getChannel().write(pmt.getBuffer());
 			// ここからpesを作成する。
 			int totalFrame = 0;
 			int j = 0;
@@ -92,7 +91,7 @@ public class PesTestForMp3 {
 				pes.getAdaptationField().setPcrBase((long)(90000L * 1.152 * totalFrame / samplingRate));
 				ByteBuffer buf = null;
 				while((buf = pes.getBuffer()) != null) {
-					output.write(buf);
+					output.getChannel().write(buf);
 				}
 			}
 		}

@@ -2,7 +2,6 @@ package com.ttProject.media.test;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.nio.channels.FileChannel;
 import java.util.List;
 
 import org.junit.Test;
@@ -65,15 +64,15 @@ public class Version5Test {
 			}
 		});
 		// 書き込み対象作成
-		FileChannel output = new FileOutputStream("target.flv").getChannel();
+		FileOutputStream output = new FileOutputStream("target.flv");
 		// header情報
-		orderModel.getFlvHeader().writeTag(output);
+		orderModel.getFlvHeader().writeTag(output.getChannel());
 		List<Tag> tagList;
 		// データを順に取り出します。nullになったら終わり
 		while((tagList = orderModel.nextTagList(fc)) != null) {
 			// 取り出したタグを書き出していきます。
 			for(Tag tag : tagList) {
-				tag.writeTag(output);
+				tag.writeTag(output.getChannel());
 			}
 		}
 		output.close();

@@ -2,7 +2,6 @@ package com.ttProject.media.test;
 
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,12 +30,12 @@ public class PesTest {
 	@Test
 	public void test() throws Exception {
 		// 書き込み対象
-		FileChannel output = null;
+		FileOutputStream output = null;
 		// 読み込み対象
 		IReadChannel target = null;
 		try {
 			// 書き込み対象
-			output = new FileOutputStream("output2.ts").getChannel();
+			output = new FileOutputStream("output2.ts");
 			// 読み込み対象とりあえずadtsのaacにしておく。
 			target = FileReadChannel.openFileReadChannel(
 					Thread.currentThread().getContextClassLoader().getResource("smile.aac")
@@ -45,16 +44,16 @@ public class PesTest {
 			// sdt
 			Sdt sdt = new Sdt();
 			sdt.writeDefaultProvider("taktodTools", "mpegtsMuxer");
-			output.write(sdt.getBuffer());
+			output.getChannel().write(sdt.getBuffer());
 
 			// pat
 			Pat pat = new Pat();
-			output.write(pat.getBuffer());
+			output.getChannel().write(pat.getBuffer());
 			
 			// pmt
 			Pmt pmt = new Pmt();
 			pmt.addNewField(PmtElementaryField.makeNewField(CodecType.AUDIO_AAC));
-			output.write(pmt.getBuffer());
+			output.getChannel().write(pmt.getBuffer());
 
 			// ここからpesをつくっていく
 			int totalFrame = 0;
@@ -111,7 +110,7 @@ public class PesTest {
 				ByteBuffer buf = null;
 				while((buf = pes.getBuffer()) != null) {
 					// 取得データを書き込んでいく
-					output.write(buf);
+					output.getChannel().write(buf);
 				}
 			}
 		}
@@ -125,6 +124,7 @@ public class PesTest {
 				}
 				catch (Exception e) {
 				}
+				output = null;
 			}
 			if(target != null) {
 				try {
@@ -132,6 +132,7 @@ public class PesTest {
 				}
 				catch (Exception e) {
 				}
+				target = null;
 			}
 		}
 	}

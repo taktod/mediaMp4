@@ -105,11 +105,16 @@ public class Version4Test {
 		// あとは本体のコピーを実施する必要あり。
 		try {
 			// 新しいファイルをつくりはじめる。
-			FileChannel target = new FileOutputStream(output, true).getChannel();
-			int chunkTotal = makeHdr(fc, list, size, target);
+			FileOutputStream target = new FileOutputStream(output, true);
+			int chunkTotal = makeHdr(fc, list, size, target.getChannel());
 			// とりあえずここからは、mdatの生成が必要。
-			makeBody(fc, target, chunkTotal);
-			target.close();
+			makeBody(fc, target.getChannel(), chunkTotal);
+			try {
+				target.close();
+			}
+			catch(Exception e) {
+			}
+			target = null;
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -144,7 +149,7 @@ public class Version4Test {
 	private int makeHdr(IReadChannel fc, List<Atom> list, int size,
 			FileChannel target) throws IOException,
 			Exception {
-		FileChannel idx = new FileOutputStream(tmp).getChannel();
+		FileOutputStream idx = new FileOutputStream(tmp);
 		int pos;
 		ByteBuffer buffer;
 		// ftyp
@@ -181,9 +186,9 @@ public class Version4Test {
 		buffer = BufferUtil.safeRead(fc, 4);
 		target.write(buffer);
 		buffer.position(0);
-		idx.write(buffer);
+		idx.getChannel().write(buffer);
 		buffer.position(0);
-		idx.write(buffer);
+		idx.getChannel().write(buffer);
 
 /*		buffer = BufferUtil.safeRead(fc, 16);
 		target.write(buffer);
@@ -233,12 +238,12 @@ public class Version4Test {
 				target.write(buf);
 				
 				buf.position(0);
-				idx.write(buf);
-				idx.write(BufferUtil.safeRead(fc, 4));
+				idx.getChannel().write(buf);
+				idx.getChannel().write(BufferUtil.safeRead(fc, 4));
 				buf = ByteBuffer.allocate(4);
 				buf.putInt(chunkSize);
 				buf.flip();
-				idx.write(buf);
+				idx.getChannel().write(buf);
 				pos += chunkSize;
 				chunkTotal += chunkSize;
 			}
@@ -262,12 +267,12 @@ public class Version4Test {
 		buf.flip();
 		target.write(buf);
 		buf.position(0);
-		idx.write(buf);
-		idx.write(BufferUtil.safeRead(fc, 4));
+		idx.getChannel().write(buf);
+		idx.getChannel().write(BufferUtil.safeRead(fc, 4));
 		buf = ByteBuffer.allocate(4);
 		buf.putInt(chunkSize);
 		buf.flip();
-		idx.write(buf);
+		idx.getChannel().write(buf);
 		pos += chunkSize;
 		chunkTotal += chunkSize;
 

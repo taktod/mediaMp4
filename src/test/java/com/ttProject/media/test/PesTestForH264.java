@@ -2,7 +2,6 @@ package com.ttProject.media.test;
 
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.List;
 
 import org.junit.Test;
@@ -95,26 +94,26 @@ public class PesTestForH264 {
 	public void test() throws Exception {
 		SequenceParameterSet sps = null;
 		PictureParameterSet pps = null;
-		FileChannel output = null;
+		FileOutputStream output = null;
 		IReadChannel target = null;
 		try {
-			output = new FileOutputStream("output_1.ts").getChannel();
+			output = new FileOutputStream("output_1.ts");
 			target = FileReadChannel.openFileReadChannel(
 					Thread.currentThread().getContextClassLoader().getResource("mario.nosound.flv")
 			);
 			// sdt
 			Sdt sdt = new Sdt();
 			sdt.writeDefaultProvider("taktodTools", "mpegtsMuxer");
-			output.write(sdt.getBuffer());
+			output.getChannel().write(sdt.getBuffer());
 			
 			// pat
 			Pat pat = new Pat();
-			output.write(pat.getBuffer());
+			output.getChannel().write(pat.getBuffer());
 			
 			// pmt
 			Pmt pmt = new Pmt();
 			pmt.addNewField(PmtElementaryField.makeNewField(CodecType.VIDEO_H264));
-			output.write(pmt.getBuffer());
+			output.getChannel().write(pmt.getBuffer());
 			
 			// ここからpesをつくっていく。
 			// flvからh.264のデータを取り出して、mpegtsに書き出していく。
@@ -134,77 +133,81 @@ public class PesTestForH264 {
 					VideoTag videoTag = (VideoTag) tag;
 					IReadChannel dataChannel = new ByteReadChannel(videoTag.getRawData());
 					dataChannel.position(3);
-					if(videoTag.isMediaSequenceHeader()) {
-						// mediaSequenceHeaderの場合はspsとppsを取り出して保持しておく
-						ConfigData configData = new ConfigData();
-						List<Frame> frames = configData.getNals(dataChannel);
-						for(Frame frame : frames) {
-							if(frame instanceof SequenceParameterSet) {
-								sps = (SequenceParameterSet)frame;
-							}
-							if(frame instanceof PictureParameterSet) {
-								pps = (PictureParameterSet)frame;
-							}
-						}
-					}
-					else {
-						if(sps == null || pps == null) {
-							throw new Exception("spsかppsが未指定になっています。");
-						}
-						// 通常の動画データの場合は抜き出して処理しておく。
-						Frame frame = frameAnalyzer.analyze(dataChannel);
-						// 書き込み対象frame
-						if(videoTag.isKeyFrame()) {
-							// キーフレームの場合
-							// unitStartとして書き込み
-							// pcrフィールドあり
-							System.out.println("キーフレーム書き込みテスト");
-							// 書き込みするデータをつくっておく。
-							AccessUnitDelimiter aud = new AccessUnitDelimiter();
-							ByteBuffer writeData = ByteBuffer.allocate(
-									4 + aud.getSize() +
-									4 + sps.getSize() +
-									4 + pps.getSize() +
-									4 + frame.getSize());
-							writeData.putInt(1); // nalの記録初め
-							writeData.put(aud.getData());
-							writeData.putInt(1);
-							writeData.put(sps.getData());
-							writeData.putInt(1);
-							writeData.put(pps.getData());
-							writeData.putInt(1);
-							writeData.put(frame.getData());
-							writeData.flip();
-							// pesの作成してデータを書き込みます。
-							Pes pes = new Pes(CodecType.VIDEO_H264, true, (short)0x0100, writeData, (long)(90L * videoTag.getTimestamp()));
-							pes.getAdaptationField().setPcrBase((long)(90L * videoTag.getTimestamp()));
-							ByteBuffer buf = null;
-							while((buf = pes.getBuffer()) != null) {
-								output.write(buf);
+					try {
+						if(videoTag.isMediaSequenceHeader()) {
+							// mediaSequenceHeaderの場合はspsとppsを取り出して保持しておく
+							ConfigData configData = new ConfigData();
+							List<Frame> frames = configData.getNals(dataChannel);
+							for(Frame frame : frames) {
+								if(frame instanceof SequenceParameterSet) {
+									sps = (SequenceParameterSet)frame;
+								}
+								if(frame instanceof PictureParameterSet) {
+									pps = (PictureParameterSet)frame;
+								}
 							}
 						}
 						else {
-							// innerFrameの場合
-							// unitStartとして書き込み
-							AccessUnitDelimiter aud = new AccessUnitDelimiter();
-							ByteBuffer writeData = ByteBuffer.allocate(
-									4 + aud.getSize() +
-									4 + frame.getSize()
-							);
-							writeData.putInt(1);
-							writeData.put(aud.getData());
-							writeData.putInt(1);
-							writeData.put(frame.getData());
-							writeData.flip();
-							// adaptationFieldはなし。(pcrの記述はなし)
-							Pes pes = new Pes(CodecType.VIDEO_H264, false, (short)0x0100, writeData, (long)(90L * videoTag.getTimestamp()));
-							ByteBuffer buf = null;
-							while((buf = pes.getBuffer()) != null) {
-								output.write(buf);
+							if(sps == null || pps == null) {
+								throw new Exception("spsかppsが未指定になっています。");
+							}
+							// 通常の動画データの場合は抜き出して処理しておく。
+							Frame frame = frameAnalyzer.analyze(dataChannel);
+							// 書き込み対象frame
+							if(videoTag.isKeyFrame()) {
+								// キーフレームの場合
+								// unitStartとして書き込み
+								// pcrフィールドあり
+								System.out.println("キーフレーム書き込みテスト");
+								// 書き込みするデータをつくっておく。
+								AccessUnitDelimiter aud = new AccessUnitDelimiter();
+								ByteBuffer writeData = ByteBuffer.allocate(
+										4 + aud.getSize() +
+										4 + sps.getSize() +
+										4 + pps.getSize() +
+										4 + frame.getSize());
+								writeData.putInt(1); // nalの記録初め
+								writeData.put(aud.getData());
+								writeData.putInt(1);
+								writeData.put(sps.getData());
+								writeData.putInt(1);
+								writeData.put(pps.getData());
+								writeData.putInt(1);
+								writeData.put(frame.getData());
+								writeData.flip();
+								// pesの作成してデータを書き込みます。
+								Pes pes = new Pes(CodecType.VIDEO_H264, true, (short)0x0100, writeData, (long)(90L * videoTag.getTimestamp()));
+								pes.getAdaptationField().setPcrBase((long)(90L * videoTag.getTimestamp()));
+								ByteBuffer buf = null;
+								while((buf = pes.getBuffer()) != null) {
+									output.getChannel().write(buf);
+								}
+							}
+							else {
+								// innerFrameの場合
+								// unitStartとして書き込み
+								AccessUnitDelimiter aud = new AccessUnitDelimiter();
+								ByteBuffer writeData = ByteBuffer.allocate(
+										4 + aud.getSize() +
+										4 + frame.getSize()
+								);
+								writeData.putInt(1);
+								writeData.put(aud.getData());
+								writeData.putInt(1);
+								writeData.put(frame.getData());
+								writeData.flip();
+								// adaptationFieldはなし。(pcrの記述はなし)
+								Pes pes = new Pes(CodecType.VIDEO_H264, false, (short)0x0100, writeData, (long)(90L * videoTag.getTimestamp()));
+								ByteBuffer buf = null;
+								while((buf = pes.getBuffer()) != null) {
+									output.getChannel().write(buf);
+								}
 							}
 						}
 					}
-					dataChannel.close();
+					finally {
+						dataChannel.close();
+					}
 				}
 			}
 			catch (Exception e) {
