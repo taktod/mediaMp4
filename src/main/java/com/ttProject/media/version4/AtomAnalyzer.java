@@ -86,6 +86,8 @@ public class AtomAnalyzer implements IAtomAnalyzer {
 			Stco stco = new Stco(position, size);
 			ch.position(position + size);
 			return stco;
+		default:
+			break;
 		}
 		ch.position(position + size);
 		return new Atom(tag, position, size) {

@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +28,6 @@ import com.ttProject.media.version.IContentsManager;
 import com.ttProject.nio.channels.FileReadChannel;
 import com.ttProject.nio.channels.IReadChannel;
 import com.ttProject.util.BufferUtil;
-import com.ttProject.util.ChannelUtil;
 import com.ttProject.util.TmpFile;
 
 /**
@@ -108,7 +106,14 @@ public class ContentsManager4 implements IContentsManager {
 			e.printStackTrace();
 		}
 		finally {
-			source = ChannelUtil.safeClose(source);
+			if(source != null) {
+				try {
+					source.close();
+				}
+				catch(Exception e) {
+				}
+				source = null;
+			}
 		}
 	}
 	/**
@@ -117,15 +122,15 @@ public class ContentsManager4 implements IContentsManager {
 	 * @param size
 	 */
 	private void makeTmpFile(List<Atom> list, int moovSize) throws Exception {
-		FileChannel idx = null;
-		FileChannel hdr = null;
+		FileOutputStream idx = null;
+		FileOutputStream hdr = null;
 		ByteBuffer buffer;
 		int pos;
 		try {
-			idx = new FileOutputStream(idxFile).getChannel();
-			hdr = new FileOutputStream(hdrFile).getChannel();
+			idx = new FileOutputStream(idxFile);
+			hdr = new FileOutputStream(hdrFile);
 			// 全体の長さ書き込み(とりあえずデフォルトとして、全体サイズをいれておく)
-			BufferUtil.writeInt(idx, source.size());
+			BufferUtil.writeInt(idx.getChannel(), source.size());
 			// ftyp
 			buffer = ByteBuffer.allocate(ftyp.length + 8);
 			buffer.put(ftyp);
@@ -133,7 +138,7 @@ public class ContentsManager4 implements IContentsManager {
 			buffer.putInt(moovSize);
 			buffer.put("moov".getBytes());
 			buffer.flip();
-			hdr.write(buffer);
+			hdr.getChannel().write(buffer);
 			// 通常のタグの書き込みをすすめていく。
 			for(Atom atom : list) {
 				if(atom instanceof ParentAtom) {
@@ -141,29 +146,29 @@ public class ContentsManager4 implements IContentsManager {
 					buffer.putInt(atom.getSize());
 					buffer.put(atom.getName().getBytes());
 					buffer.flip();
-					hdr.write(buffer);
+					hdr.getChannel().write(buffer);
 				}
 				else {
 					// stscとstszを読み込む必要があるが、すでにatomのコピーがおわっているならそっちから読んだ方がよさそう。
 					if(atom instanceof Stsc) {
-						stsc = new Stsc((int)hdr.position(), atom.getSize());
+						stsc = new Stsc((int)hdr.getChannel().position(), atom.getSize());
 					}
 					else if(atom instanceof Stsz) {
-						stsz = new Stsz((int)hdr.position(), atom.getSize());
+						stsz = new Stsz((int)hdr.getChannel().position(), atom.getSize());
 					}
 					source.position(atom.getPosition());
-					BufferUtil.quickCopy(source, hdr, atom.getSize());
+					BufferUtil.quickCopy(source, hdr.getChannel(), atom.getSize());
 				}
 			}
 			// stcoまでおわっているはず。
 			// 残りはstcoの書き込みとidxファイルの作成
 			source.position(stco.getPosition());
 			buffer = BufferUtil.safeRead(source, 16);
-			hdr.write(buffer);
+			hdr.getChannel().write(buffer);
 			stco.start(source, false);
 			buffer.position(12);
 			int stcoCount = buffer.getInt();
-			BufferUtil.writeInt(idx, stcoCount);
+			BufferUtil.writeInt(idx.getChannel(), stcoCount);
 			// stcoデータ開始位置
 			pos = ftyp.length + moovSize + 8; // もともとのデータのある位置(開始位置みたいなもの)
 			
@@ -182,13 +187,13 @@ public class ContentsManager4 implements IContentsManager {
 					chunkSize += stsz.getSampleSize();
 				}
 				// chunkSizeがstcoがもつべきデータサイズ
-				BufferUtil.writeInt(hdr, pos); // moovの内部のデータ(読み込み始めの位置)
+				BufferUtil.writeInt(hdr.getChannel(), pos); // moovの内部のデータ(読み込み始めの位置)
 				buffer = ByteBuffer.allocate(12);
 				buffer.putInt(pos); // 新しいファイル上の位置
 				buffer.putInt(stco.getChunkPos()); // 旧ファイル上の位置
 				buffer.putInt(chunkSize); // 読み込むデータ量
 				buffer.flip();
-				idx.write(buffer);
+				idx.getChannel().write(buffer);
 				pos += chunkSize; // chunkSize分
 				mdatSize += chunkSize;
 			}
@@ -197,16 +202,30 @@ public class ContentsManager4 implements IContentsManager {
 			buffer.putInt(mdatSize + 8);
 			buffer.put("mdat".getBytes());
 			buffer.flip();
-			hdr.write(buffer);
-			idx.position(0);
-			BufferUtil.writeInt(idx, pos);
+			hdr.getChannel().write(buffer);
+			idx.getChannel().position(0);
+			BufferUtil.writeInt(idx.getChannel(), pos);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
 		}
 		finally {
-			idx = ChannelUtil.safeClose(idx);
-			hdr = ChannelUtil.safeClose(hdr);
+			if(idx != null) {
+				try {
+					idx.close();
+				}
+				catch(Exception e) {
+				}
+				idx = null;
+			}
+			if(hdr != null) {
+				try {
+					hdr.close();
+				}
+				catch(Exception e) {
+				}
+				hdr = null;
+			}
 		}
 	}
 	/**
@@ -306,8 +325,22 @@ public class ContentsManager4 implements IContentsManager {
 //			e.printStackTrace();
 		}
 		finally {
-			idxChannel = ChannelUtil.safeClose(idxChannel);
-			hdrChannel = ChannelUtil.safeClose(hdrChannel);
+			if(idxChannel != null) {
+				try {
+					idxChannel.close();
+				}
+				catch(Exception e) {
+				}
+				idxChannel = null;
+			}
+			if(hdrChannel != null) {
+				try {
+					hdrChannel.close();
+				}
+				catch(Exception e) {
+				}
+				hdrChannel = null;
+			}
 		}
 	}
 	/**
@@ -405,7 +438,14 @@ public class ContentsManager4 implements IContentsManager {
 			;
 		}
 		finally {
-			source = ChannelUtil.safeClose(source);
+			if(source != null) {
+				try {
+					source.close();
+				}
+				catch(Exception e) {
+				}
+				source = null;
+			}
 		}
 	}
 	/**
