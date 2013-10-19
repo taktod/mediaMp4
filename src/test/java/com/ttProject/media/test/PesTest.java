@@ -5,8 +5,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
-
 import com.ttProject.media.aac.Frame;
 import com.ttProject.media.aac.FrameAnalyzer;
 import com.ttProject.media.aac.IFrameAnalyzer;
@@ -27,7 +25,7 @@ import com.ttProject.nio.channels.IReadChannel;
  *
  */
 public class PesTest {
-	@Test
+//	@Test
 	public void test() throws Exception {
 		// 書き込み対象
 		FileOutputStream output = null;
