@@ -101,7 +101,7 @@ public class PesTest {
 				buffer.flip();
 				// aacは1フレームあたり1024サンプルあるので、1.024でかけないとだめ
 				// pesを作成(とりあえずptsのみ指定でいく)
-				Pes pes = new Pes(CodecType.AUDIO_AAC, true, (short)0x0100, buffer, (long)(90000L * 1.024 * totalFrame / samplingRate));
+				Pes pes = new Pes(CodecType.AUDIO_AAC, true, true, (short)0x0100, buffer, (long)(90000L * 1.024 * totalFrame / samplingRate));
 				// adaptationFieldにデータをいれる必要があるので、追記しておく。
 				pes.getAdaptationField().setPcrBase((long)(90000L * 1.024 * totalFrame / samplingRate));
 				// データを取り出す(データがなくなるまでgetBufferで188バイトずつ取得できるようになっている。)

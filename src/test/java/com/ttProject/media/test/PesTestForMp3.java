@@ -87,7 +87,7 @@ public class PesTestForMp3 {
 				buffer.flip();
 				// mp3は1フレームあたり1152サンプルあるっぽい。(versionとlayerに依存するみたいなので、注意が必要あと、サンプル数が違うデータがも混入する可能性があるので、この計算方法は本当はまちがってるはず)
 				// 本来なら、frame数から割り出すのではなく、先頭のフレームからサンプル数をきちんと数えるべき。
-				Pes pes = new Pes(CodecType.AUDIO_MPEG1, true, (short)0x0100, buffer, (long)(90000L * 1.152 * totalFrame / samplingRate));
+				Pes pes = new Pes(CodecType.AUDIO_MPEG1, true, true, (short)0x0100, buffer, (long)(90000L * 1.152 * totalFrame / samplingRate));
 				pes.getAdaptationField().setPcrBase((long)(90000L * 1.152 * totalFrame / samplingRate));
 				ByteBuffer buf = null;
 				while((buf = pes.getBuffer()) != null) {

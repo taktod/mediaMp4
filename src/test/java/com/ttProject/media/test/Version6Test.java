@@ -150,7 +150,7 @@ public class Version6Test {
 									}
 									writeData.flip();
 									System.out.println("実データサイズ:" + writeData.remaining());
-									Pes pes = new Pes(CodecType.AUDIO_AAC, false, (short)0x0101, writeData, (90L * startAacTimestamp));
+									Pes pes = new Pes(CodecType.AUDIO_AAC, false, true, (short)0x0101, writeData, (90L * startAacTimestamp));
 	//								pes.setAdaptationFieldExist(1);
 	//								AdaptationField adaptationField = new AdaptationField();
 	//								adaptationField.setRandomAccessIndicator(1);
@@ -180,7 +180,7 @@ public class Version6Test {
 								writeData.putInt(1);
 								writeData.put(frame.getData());
 								writeData.flip();
-								Pes pes = new Pes(CodecType.VIDEO_H264, true, (short)0x0100, writeData, (long)(90L * videoTag.getTimestamp()));
+								Pes pes = new Pes(CodecType.VIDEO_H264, true, true, (short)0x0100, writeData, (long)(90L * videoTag.getTimestamp()));
 								pes.getAdaptationField().setPcrBase((long)(90L * videoTag.getTimestamp()));
 								ByteBuffer buf = null;
 								while((buf = pes.getBuffer()) != null) {
@@ -197,7 +197,7 @@ public class Version6Test {
 								writeData.putInt(1);
 								writeData.put(frame.getData());
 								writeData.flip();
-								Pes pes = new Pes(CodecType.VIDEO_H264, false, (short)0x0100, writeData, (long)(90L * videoTag.getTimestamp()));
+								Pes pes = new Pes(CodecType.VIDEO_H264, false, false, (short)0x0100, writeData, (long)(90L * videoTag.getTimestamp()));
 								ByteBuffer buf = null;
 								while((buf = pes.getBuffer()) != null) {
 									output.getChannel().write(buf);

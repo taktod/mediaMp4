@@ -176,7 +176,7 @@ public class PesTestForH264 {
 								writeData.put(frame.getData());
 								writeData.flip();
 								// pesの作成してデータを書き込みます。
-								Pes pes = new Pes(CodecType.VIDEO_H264, true, (short)0x0100, writeData, (long)(90L * videoTag.getTimestamp()));
+								Pes pes = new Pes(CodecType.VIDEO_H264, true, true, (short)0x0100, writeData, (long)(90L * videoTag.getTimestamp()));
 								pes.getAdaptationField().setPcrBase((long)(90L * videoTag.getTimestamp()));
 								ByteBuffer buf = null;
 								while((buf = pes.getBuffer()) != null) {
@@ -197,7 +197,7 @@ public class PesTestForH264 {
 								writeData.put(frame.getData());
 								writeData.flip();
 								// adaptationFieldはなし。(pcrの記述はなし)
-								Pes pes = new Pes(CodecType.VIDEO_H264, false, (short)0x0100, writeData, (long)(90L * videoTag.getTimestamp()));
+								Pes pes = new Pes(CodecType.VIDEO_H264, false, false, (short)0x0100, writeData, (long)(90L * videoTag.getTimestamp()));
 								ByteBuffer buf = null;
 								while((buf = pes.getBuffer()) != null) {
 									output.getChannel().write(buf);
